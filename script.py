@@ -10,7 +10,6 @@ sim = lather.Simulation('config.cfg')
 results = sim.observe(obstime, True)
 print(time.time()-start)
 
-sim.fit(obstime, results['flux'])
 exit()
 soap_flux = np.loadtxt('soap_flux.txt')
 soap_rv = np.loadtxt('soap_rv.txt')
