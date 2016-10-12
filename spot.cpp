@@ -154,9 +154,7 @@ void Spot::scan(double phase, double& flux, std::vector<double>& profile, bool o
     double v_shift;
     double limb, spot_temp, limbSum;
     double coordinatesReal[3];
-    double depth;
-    double r_cos;
-    double rSquared;
+    double depth, r_cos, rSquared;
     std::vector<double> ccfShifted;
     std::vector<double> ccfActiveShifted;
 

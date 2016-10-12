@@ -32,7 +32,7 @@ Simulation::Simulation(unsigned int gridSize, unsigned int spotResolution) {
 
 Simulation::Simulation(const char* filename) {
 
-    double radius, prot, inclination, temperature, spot_temp_diff, limbLinear, limbQuadratic;
+    double radius, period, inclination, temperature, spot_temp_diff, limbLinear, limbQuadratic;
     double latitude, longitude, size;
     bool plage;
 
@@ -45,14 +45,14 @@ Simulation::Simulation(const char* filename) {
     this -> spotResolution = reader.GetInteger("simulation", "spot_resolution", 100);
 
     radius = reader.GetReal("star", "radius", 1.0);
-    prot = reader.GetReal("star", "prot", 25.05);
+    period = reader.GetReal("star", "period", 25.05);
     inclination = reader.GetReal("star", "inclination", 90.0);
     temperature = reader.GetReal("star", "Tstar", 5778.0);
     spot_temp_diff = reader.GetReal("star", "Tdiff_spot", 663.0);
     limbLinear = reader.GetReal("star", "limb1", 0.29);
     limbQuadratic = reader.GetReal("star", "limb2", 0.34);
 
-    setStar(radius, prot, inclination, temperature, spot_temp_diff, limbLinear, limbQuadratic);
+    setStar(radius, period, inclination, temperature, spot_temp_diff, limbLinear, limbQuadratic);
 
     std::set<std::string> sections = reader.GetSections();
     std::set<std::string>::iterator sectionName = sections.begin();
@@ -93,7 +93,7 @@ void Simulation::observe(std::vector<double>& time, std::vector<double>& flux, s
     std::vector<double> fit_result = star.fit_result;
 
     for (t = 0; t < time.size(); t++) {
-        phase = fmod(time[t], star.prot)/star.prot * 2*pi;
+        phase = fmod(time[t], star.period)/star.period * 2*pi;
 
         for (s = 0; s < spots.size(); s++) {
             if (spots[s].isVisible(phase)) {

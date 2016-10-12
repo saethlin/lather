@@ -11,8 +11,9 @@ class Star {
         Star(double radius, double period, double inclination, double temperature, double spotTempDiff,
                         double limbLinear, double limbQuadratic, unsigned int gridSize);
 
+        double radius;
         double vrot;
-        double prot;
+        double period;
         double inclination;
         double temperature, spotTempDiff;
         double limbLinear, limbQuadratic;

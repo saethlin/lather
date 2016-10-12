@@ -7,6 +7,8 @@ obstime = np.linspace(0, 25.05, 1000, endpoint=False)
 
 start = time.time()
 sim = lather.Simulation('config.cfg')
+print(time.time()-start)
+print(sim.toString())
 results = sim.observe(obstime, True)
 print(time.time()-start)
 

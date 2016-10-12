@@ -1,5 +1,7 @@
 //#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <exception>
+#include <stdio.h>
+#include <sstream>
 #include <vector>
 #include <stdbool.h>
 #include <Python.h>
@@ -31,7 +33,6 @@ static int PySimulation_init(PySimulation* self, PyObject* args, PyObject* kwarg
         self->CppSimulation = Simulation(gridSize, spotResolution);
         return 0;
     }
-    return -1;
 }
 
 
@@ -154,6 +155,34 @@ static PyObject* PySimulation_fit(PySimulation* self, PyObject *args, PyObject* 
 }
 
 
+static PyObject* PySimulation_str(PySimulation* self) {
+    std::ostringstream reprStream;
+    reprStream << std::boolalpha;
+
+    reprStream << "Simulation:\n";
+    reprStream << "    Grid size: " << self->CppSimulation.gridSize << "\n";
+    reprStream << "    Spot resolution: " << self->CppSimulation.spotResolution << "\n";
+    reprStream << "Star:\n";
+    reprStream << "    Radius: " << self->CppSimulation.star.radius << "\n";
+    reprStream << "    Period: " << self->CppSimulation.star.period << "\n";
+    reprStream << "    Inclination: " << self->CppSimulation.star.inclination << "\n";
+    reprStream << "    Temperature: " << self->CppSimulation.star.temperature << "\n";
+    reprStream << "    Spot temperature difference: " << self->CppSimulation.star.spotTempDiff << "\n";
+    reprStream << "    Limb darkening coefficients: " << self->CppSimulation.star.limbLinear << " " << self->CppSimulation.star.limbQuadratic << "\n";
+
+    std::vector<Spot>::iterator spot;
+    for (spot = self->CppSimulation.spots.begin(); spot != self->CppSimulation.spots.end(); ++spot) {
+        reprStream << "Spot:\n";
+        reprStream << "    Latitude: " << spot->latitude << "\n";
+        reprStream << "    Longitude: " << spot->longitude << "\n";
+        reprStream << "    Size: " << spot->size << "\n";
+        reprStream << "    Plage: " << spot->plage << "\n";
+    }
+
+    return PyUnicode_FromString(reprStream.str().c_str());
+}
+
+
 static PyMethodDef PySimulation_methods[] = {
     {"set_star", (PyCFunction)PySimulation_set_star, METH_KEYWORDS|METH_VARARGS,
      "Set the star parameters"},
@@ -165,6 +194,8 @@ static PyMethodDef PySimulation_methods[] = {
      "Compute simulated observations at the given times"},
     {"fit", (PyCFunction)PySimulation_fit, METH_KEYWORDS|METH_VARARGS,
      "Attempt to fit data with the current simulation"},
+    {"toString", (PyCFunction)PySimulation_str, METH_NOARGS,
+     "Produce a string representation"},
     {NULL}  /* Sentinel */
 };
 
@@ -179,7 +210,7 @@ static PyTypeObject PySimulationType = {
     0,                         /* tp_getattr */
     0,                         /* tp_setattr */
     0,                         /* tp_reserved */
-    0,                         /* tp_repr */
+    0,          /* tp_repr */
     0,                         /* tp_as_number */
     0,                         /* tp_as_sequence */
     0,                         /* tp_as_mapping */

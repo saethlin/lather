@@ -27,7 +27,8 @@ Star::Star() {}
 Star::Star(double radius, double period, double inclination, double temperature, double spotTempDiff,
            double limbLinear, double limbQuadratic, unsigned int gridSize) {
     inclination *= pi/180.0;
-    this -> prot = period;
+    this -> radius = radius;
+    this -> period = period;
     this -> vrot = (2.0 * pi * solarRadius)/(period * 86400.0);
     this -> inclination = inclination;
     this -> temperature = temperature;
@@ -71,12 +72,10 @@ Star::Star(double radius, double period, double inclination, double temperature,
 
     unsigned int iy, iz, k;
     double y, z;
-    double v_shift, r_cos, limbSum;
+    double v_shift, r_cos, rSquared, limbSum;
     std::vector<double> ccfShifted;
     fit_result = std::vector<double>(4);
     ccfQuiet = std::vector<double>(profileQuiet.size);
-    limb = std::vector<double>(gridSize*gridSize);
-    double rSquared;
 
     fluxQuiet = 0;
     for (iy = 0; iy <= gridSize; iy++) {
@@ -95,9 +94,6 @@ Star::Star(double radius, double period, double inclination, double temperature,
             if (rSquared <= 1) {
                 r_cos = sqrt(1 - rSquared);
                 limbSum += 1 - limbLinear*(1.-r_cos) - limbQuadratic*(1-r_cos)*(1-r_cos);
-                //cachePos = rSquared*gridSize*gridSize;
-                //limb[cachePos] = 1 - limbLinear*(1.-r_cos) - limbQuadratic*(1-r_cos)*(1-r_cos);
-                //limbSum += limb[cachePos];
             }
         }
 
