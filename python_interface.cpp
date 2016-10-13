@@ -210,7 +210,7 @@ static PyTypeObject PySimulationType = {
     0,                         /* tp_getattr */
     0,                         /* tp_setattr */
     0,                         /* tp_reserved */
-    0,          /* tp_repr */
+    (reprfunc)PySimulation_str,          /* tp_repr */
     0,                         /* tp_as_number */
     0,                         /* tp_as_sequence */
     0,                         /* tp_as_mapping */
