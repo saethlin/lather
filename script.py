@@ -8,13 +8,14 @@ obstime = np.linspace(0, 25.05, 1000, endpoint=False)
 start = time.time()
 sim = lather.Simulation('config.cfg')
 print(time.time()-start)
-print(sim.toString())
-results = sim.observe(obstime, True)
+results = sim.observe(obstime, observe_rv=True)
 print(time.time()-start)
 
-exit()
 soap_flux = np.loadtxt('soap_flux.txt')
 soap_rv = np.loadtxt('soap_rv.txt')
+
+soap_rv -= soap_rv[0]
+results['flux'] /= results['flux'][0]
 
 f, axarr = plt.subplots(3, sharex=True)
 
@@ -29,7 +30,8 @@ axarr[1].plot(obstime, soap_rv*1000 - results['rv']*1000)
 axarr[1].set_ylabel('Difference in RV (m/s)')
 axarr[1].set_xlim(0, 25.05)
 
-axarr[2].plot(obstime, soap_flux - results['flux'])
+axarr[2].plot(obstime, soap_flux)
+axarr[2].plot(obstime, results['flux'])
 axarr[2].set_ylabel('Difference in relative flux')
 axarr[2].set_xlabel('Time (days)')
 
