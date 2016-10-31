@@ -150,7 +150,7 @@ void Spot::scan(double phase, double& flux, std::vector<double>& profile, bool o
     unsigned int iy, iz, i;
     double y, z, xsquared;
     double v_shift;
-    double limb, spot_temp, limbSum;
+    double spot_temp, limbSum;
     double coordinatesReal[3];
     double depth, r_cos, rSquared;
     std::vector<double> ccfShifted;
@@ -158,6 +158,7 @@ void Spot::scan(double phase, double& flux, std::vector<double>& profile, bool o
 
     double inv_phase = phase - 2*pi;
     double inclination = star.inclination;
+    double npts;
 
     // matrix R from spot_inverse_rotation
     double matrixPhase[3][3] = {{(1 - cos(inv_phase)) * cos(inclination) * cos(inclination) + cos(inv_phase), sin(inv_phase) * sin(inclination), (1 - cos(inv_phase)) * cos(inclination) * sin(inclination)},
@@ -198,6 +199,8 @@ void Spot::scan(double phase, double& flux, std::vector<double>& profile, bool o
         }
 
         limbSum = 0;
+        npts = 0;
+        double intensitySum = 0;
 
         for (iz = iminz; iz < imaxz; iz++) {
             z = -1.0+iz*2.0/star.gridSize;
@@ -216,9 +219,9 @@ void Spot::scan(double phase, double& flux, std::vector<double>& profile, bool o
                     if (plage) {
                         r_cos = sqrt(1. - rSquared);
                         spot_temp = star.temperature + 250.9 - 407.7 * r_cos + 190.9 * r_cos*r_cos;
-                        intensity = planck(5293.4115e-10, spot_temp) / star.intensity;
-                        limb = 1 - star.limbLinear * (1 - r_cos) - star.limbQuadratic * (1 - r_cos)*(1 - r_cos);
-                        limbSum += limb;
+                        intensitySum += planck(5293.4115e-10, spot_temp) / star.intensity;
+                        limbSum += 1 - star.limbLinear * (1 - r_cos) - star.limbQuadratic * (1 - r_cos)*(1 - r_cos);
+                        npts += 1;
                     }
                     else {
                         r_cos = sqrt(1. - rSquared);
@@ -227,8 +230,8 @@ void Spot::scan(double phase, double& flux, std::vector<double>& profile, bool o
                 }
             }
         }
-
-        if (observeRV) {
+        if (npts != 0 && observeRV) {
+            if (plage) intensity = intensitySum/npts;
             for (i = 0; i < ccfShifted.size(); i++) {
                 profile[i] += (ccfShifted[i] - intensity * ccfActiveShifted[i]) * limbSum;
             }
