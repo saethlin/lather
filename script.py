@@ -3,14 +3,19 @@ import numpy as np
 from matplotlib import pyplot as plt
 import lather
 
-obstime = np.linspace(0, 25.05, 1000, endpoint=False)
+obstime = np.linspace(0, 25.05, 50, endpoint=False)
 
-start = time.time()
 sim = lather.Simulation('config.cfg')
-print(time.time()-start)
-print(sim.toString())
 results = sim.observe(obstime, True)
-print(time.time()-start)
+
+flux_observed = results['flux']
+sim.clear_spots()
+sim.add_spot(29., 180., 0.1, False)
+sim.add_spot(-29., 0., 0.1, False)
+
+print(sim)
+sim.fit(obstime, flux_observed)
+print(sim)
 
 exit()
 soap_flux = np.loadtxt('soap_flux.txt')

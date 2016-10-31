@@ -25,15 +25,13 @@ Spot::Spot(Star star, double latitude, double longitude, double size, bool plage
         this -> intensity = planck(5293.4115e-10, spotTemp) / star.intensity;
     }
 
-    unsigned int i;
-    double rho;
     //Compute initial location
     std::vector<std::vector<double> > centeredCoordinates(spotResolution, std::vector<double> (3));
     initialCoordinates = std::vector<std::vector<double> > (spotResolution, std::vector<double>(3));
 
 
-    for (i = 0; i < initialCoordinates.size(); i++) {
-        rho = -pi + i*2*pi/(spotResolution-1);     // For this case, phase goes from -pi to pi (no idea why)
+    for (int i = 0; i < initialCoordinates.size(); i++) {
+        double rho = -pi + i*2*pi/(spotResolution-1);     // For this case, phase goes from -pi to pi (no idea why)
         centeredCoordinates[i][0] = sqrt(1 - size*size);
         centeredCoordinates[i][1] = size * cos(rho);
         centeredCoordinates[i][2] = size * sin(rho);
@@ -51,14 +49,6 @@ Spot::Spot(Star star, double latitude, double longitude, double size, bool plage
                                 sin(rot_incl)*sin(longitude),
                                 -sin(rot_incl)*cos(longitude)*sin(-latitude) + cos(rot_incl)*cos(-latitude)}};
 
-    // Rotate centeredCoordinates to the correct location on the star's surface
-    for (i = 0; i < initialCoordinates.size(); i++) {
-        initialCoordinates[i][0] = matrixInit[0][0]*centeredCoordinates[i][0] + matrixInit[0][1]*centeredCoordinates[i][1] + matrixInit[0][2]*centeredCoordinates[i][2];
-        initialCoordinates[i][1] = matrixInit[1][0]*centeredCoordinates[i][0] + matrixInit[1][1]*centeredCoordinates[i][1] + matrixInit[1][2]*centeredCoordinates[i][2];
-        initialCoordinates[i][2] = matrixInit[2][0]*centeredCoordinates[i][0] + matrixInit[2][1]*centeredCoordinates[i][1] + matrixInit[2][2]*centeredCoordinates[i][2];
-    }
-
-
     // matrix R2 in the original code
     double b2 = -(pi/2 - star.inclination);
     matrixSpot[0][0] = cos(latitude) * cos(-longitude) * cos(b2) - sin(b2) * sin(latitude);
@@ -70,6 +60,14 @@ Spot::Spot(Star star, double latitude, double longitude, double size, bool plage
     matrixSpot[2][0] = -sin(latitude) * cos(-longitude) * cos(b2) - cos(latitude) * sin(b2);
     matrixSpot[2][1] = sin(latitude) * sin(-longitude);
     matrixSpot[2][2] = -sin(latitude) * cos(-longitude) * sin(b2) + cos(latitude) * cos(b2);
+
+    // Rotate centeredCoordinates to the correct location on the star's surface
+    for (int i = 0; i < initialCoordinates.size(); i++) {
+        initialCoordinates[i][0] = matrixInit[0][0]*centeredCoordinates[i][0] + matrixInit[0][1]*centeredCoordinates[i][1] + matrixInit[0][2]*centeredCoordinates[i][2];
+        initialCoordinates[i][1] = matrixInit[1][0]*centeredCoordinates[i][0] + matrixInit[1][1]*centeredCoordinates[i][1] + matrixInit[1][2]*centeredCoordinates[i][2];
+        initialCoordinates[i][2] = matrixInit[2][0]*centeredCoordinates[i][0] + matrixInit[2][1]*centeredCoordinates[i][1] + matrixInit[2][2]*centeredCoordinates[i][2];
+    }
+
 
 }
 
@@ -139,10 +137,10 @@ bool Spot::isVisible(double phase) {
 
     // Indices of miny, minz,... on the grid
     double gridStep = 2./star.gridSize;
-    iminy = floor((1.+miny)/gridStep);
-    iminz = floor((1.+minz)/gridStep);
-    imaxy = ceil((1.+maxy)/gridStep);
-    imaxz = ceil((1.+maxz)/gridStep);
+    iminy = (int)floor((1.+miny)/gridStep);
+    iminz = (int)floor((1.+minz)/gridStep);
+    imaxy = (int)ceil((1.+maxy)/gridStep);
+    imaxz = (int)ceil((1.+maxz)/gridStep);
 
     return (countOn > 0);
 }
