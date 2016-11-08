@@ -230,11 +230,8 @@ void Spot::scan(double phase, double& flux, std::vector<double>& profile, bool o
                 }
             }
         }
-        if (npts != 0 && observeRV) {
-            if (plage) intensity = intensitySum/npts;
-            for (i = 0; i < ccfShifted.size(); i++) {
-                profile[i] += (ccfShifted[i] - intensity * ccfActiveShifted[i]) * limbSum;
-            }
+        for (i = 0; i < ccfShifted.size(); i++) {
+            profile[i] += (ccfShifted[i] - intensity * ccfActiveShifted[i]) * limbSum;
         }
 
         flux += (1-intensity) * limbSum;
