@@ -16,15 +16,22 @@ with open('g2013.txt') as spots_file:
 sim = lather.Simulation('config.cfg')
 sim.clear_spots()
 
-results = []
-obstime = []
+obstime = np.array(set(spot[0] for spot in spots))
+obstime = np.sort(obstime)
 
+for spot in spots:
+    sim.add_spot(*spot[1])
+
+results = sim.observe(days)['rv']*1000
+
+'''
 for spot, next_spot in zip(spots, spots[1:]):
     sim.add_spot(*spot[1])
     if spot[0] != next_spot[0]:
         results.append(sim.observe(np.array([spot[0]]))['rv'][0])
         obstime.append(spot[0])
         sim.clear_spots()
+'''
 
 plt.plot(obstime, results)
 fig = plt.gcf()
