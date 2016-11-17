@@ -1,4 +1,6 @@
-import numpy as np
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 import lather
 
 spots = []
@@ -15,9 +17,16 @@ sim = lather.Simulation('config.cfg')
 sim.clear_spots()
 
 results = []
+obstime = []
 
 for spot, next_spot in zip(spots, spots[1:]):
     sim.add_spot(*spot[1])
     if spot[0] != next_spot[0]:
-        results.append(sim.observe(np.array([spot[0]])))
+        results.append(sim.observe(np.array([spot[0]]))['rv'][0])
+        obstime.append(spot[0])
         sim.clear_spots()
+
+plt.plot(obstime, results)
+fig = plt.gcf()
+fig.set_size_inches(10, 8)
+fig.savefig('sun.pdf')
