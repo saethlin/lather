@@ -44,8 +44,8 @@ Star::Star(double radius, double period, double inclination, double temperature,
     std::vector<double> ccfActive;
 
     std::string filename;
-    if (vrot < 10) filename = "resources/solarccfhires.txt";
-    else filename = "resources/solarccfhires.txt";
+    if (vrot < 10) filename = "/home/ben/lather/resources/solarccfhires.txt";
+    else filename = "/home/ben/lather/resources/solarccfhires.txt";
 
     std::ifstream ifs(filename);
     std::string line;
