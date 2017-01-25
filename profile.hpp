@@ -1,6 +1,8 @@
 #ifndef PROFILE_HPP
 #define PROFILE_HPP
-#include <map>
+#include <cmath>
+#include <unordered_map>
+#include <memory>
 #include <vector>
 
 class Profile {
@@ -18,6 +20,6 @@ class Profile {
     private:
         double stepsize;
         std::vector<double> derivative;
-        std::map<double, std::vector<double>* > cache;
+        std::unordered_map<double, std::shared_ptr<std::vector<double> > > cache;
 };
 #endif

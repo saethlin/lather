@@ -1,7 +1,5 @@
-#include <vector>
-#include <map>
-#include <math.h>
 #include "profile.hpp"
+#include <iostream>
 
 
 Profile::Profile() {}
@@ -12,7 +10,7 @@ Profile::Profile(std::vector<double> rv, std::vector<double> ccf) {
     this -> ccf = ccf;
     this -> size = rv.size();
 
-    cache = std::map<double, std::vector<double>* > ();
+    cache = std::unordered_map<double, std::shared_ptr<std::vector<double> > >();
 
     derivative = std::vector<double>(size);
     for (unsigned int i = 0; i < size-1; i++) {
@@ -25,14 +23,12 @@ Profile::Profile(std::vector<double> rv, std::vector<double> ccf) {
 std::vector<double> Profile::shift(double v_shift) {
 
     if (!cache.count(v_shift)) {
-
-        cache[v_shift] = new std::vector<double> (size);
+        cache[v_shift] = std::unique_ptr<std::vector<double>> (new std::vector<double>(size));
         std::vector<double> &ccf_shifted = *cache[v_shift];
 
         unsigned int i;
         int quotient = round(v_shift / stepsize);
         double remainder = v_shift - ((double)quotient)*stepsize;
-
 
         if (v_shift >= 0) {
             for (i = 0; i < (unsigned int)(quotient+1); i++) {
