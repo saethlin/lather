@@ -20,6 +20,8 @@ class Simulation {
 
         void observe(std::vector<double>& time, std::vector<double>& flux, std::vector<double>& rv, bool observeRV);
 
+        void observe(std::vector<double>& time, std::vector<double>& flux, std::vector<double>& rv, double wavelength, bool observeRV);
+
         void fit(std::vector<double>& time, std::vector<double>& flux);
 
         unsigned int gridSize;

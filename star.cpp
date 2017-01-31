@@ -37,7 +37,8 @@ Star::Star(double radius, double period, double inclination, double temperature,
     this -> limbLinear = limbLinear;
     this -> limbQuadratic = limbQuadratic;
     this -> gridSize = gridSize;
-    this -> intensity = planck(5293.4115e-10, temperature);
+    //this -> intensity = planck(5293.4115e-10, temperature);
+    this -> intensity = planck(5000e-10, temperature);
 
     // Setup for profiles
     std::vector<double> rv;

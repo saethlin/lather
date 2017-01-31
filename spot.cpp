@@ -219,7 +219,7 @@ void Spot::scan(double phase, double& flux, std::vector<double>& profile, bool o
                     if (plage) {
                         r_cos = sqrt(1. - rSquared);
                         spot_temp = star.temperature + 250.9 - 407.7 * r_cos + 190.9 * r_cos*r_cos;
-                        intensitySum += planck(5293.4115e-10, spot_temp) / star.intensity;
+                        intensitySum += planck(5000e-10, spot_temp) / star.intensity;
                         limbSum += 1 - star.limbLinear * (1 - r_cos) - star.limbQuadratic * (1 - r_cos)*(1 - r_cos);
                         npts += 1;
                     }
