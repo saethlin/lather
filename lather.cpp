@@ -13,7 +13,7 @@ int main() {
     }
     std::vector<double> flux(1000);
     std::vector<double> rv(1000);
-    simulation.observe(time, flux, rv, true);
+    simulation.observe(time, flux, rv, 5000e-10, true);
 
     return 0;
 }

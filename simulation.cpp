@@ -1,7 +1,6 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <stdbool.h>
 #include "inih/cpp/INIReader.h"
 #include "star.hpp"
 #include "spot.hpp"
@@ -83,7 +82,7 @@ void Simulation::addSpot(double latitude, double longitude, double size, bool pl
 }
 
 
-void Simulation::observe(std::vector<double>& time, std::vector<double>& flux, std::vector<double>& rv, bool observeRV) {
+void Simulation::observe(std::vector<double>& time, std::vector<double>& flux, std::vector<double>& rv, double wavelength, bool observeRV) {
     unsigned int s, t, i;
     double phase;
     double spotFlux = 0;
@@ -98,7 +97,7 @@ void Simulation::observe(std::vector<double>& time, std::vector<double>& flux, s
         for (s = 0; s < spots.size(); s++) {
             if (spots[s].isVisible(phase)) {
                 anyVisible = true;
-                spots[s].scan(phase, spotFlux, spotProfile, observeRV);
+                spots[s].scan(phase, spotFlux, spotProfile, wavelength, observeRV);
             }
         }
 

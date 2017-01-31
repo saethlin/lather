@@ -1,7 +1,6 @@
 #ifndef SPOT_HPP
 #define SPOT_HPP
 #include <vector>
-#include <stdbool.h>
 #include "star.hpp"
 
 
@@ -11,7 +10,7 @@ class Spot {
 
         bool isVisible(double phase);
 
-        void scan(double phase, double& flux, std::vector<double>& profile, bool observeRV);
+        void scan(double phase, double& flux, std::vector<double>& profile, double wavelength, bool observeRV);
 
         Star star;
         double latitude;

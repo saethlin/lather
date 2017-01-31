@@ -48,7 +48,7 @@ int sim_f(const gsl_vector* v, void *params, gsl_vector* f) {
         sim.addSpot(latitude, longitude, size, spotsArePlage[i]);
     }
 
-    sim.observe(time, output, dump, false); // Observe without RV calculation
+    sim.observe(time, output, dump, 5000e-10, false); // Observe without RV calculation
 
     // Store residuals in the passed vector
     for (int i = 0; i < time.size(); i++) {

@@ -77,10 +77,11 @@ static PyObject* PySimulation_clear_spots(PySimulation* self) {
 
 static PyObject* PySimulation_observe(PySimulation* self, PyObject *args, PyObject *kwargs) {
     PyObject* timeArg = NULL;
-    PyObject* observeRV = NULL;
-    static char* kwdlist[] = {"time", "observe_rv", NULL};
+    double wavelength;
+    bool observeRV;
+    static char* kwdlist[] = {"time", "wavelength", "observe_rv", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O|p", kwdlist, &timeArg, &observeRV)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Od|p", kwdlist, &timeArg, &wavelength, &observeRV)) {
         return NULL;
     }
 
@@ -97,7 +98,7 @@ static PyObject* PySimulation_observe(PySimulation* self, PyObject *args, PyObje
     std::vector<double> flux(time.size());
     std::vector<double> rv(time.size());
 
-    self->CppSimulation.observe(time, flux, rv, observeRV);
+    self->CppSimulation.observe(time, flux, rv, wavelength, observeRV);
 
     // Copy std::vector outputs into a dict of numpy arrays
     PyObject* output_flux = PyArray_SimpleNew(1, dims, NPY_DOUBLE);

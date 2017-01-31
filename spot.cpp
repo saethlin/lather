@@ -1,7 +1,6 @@
 #include <iostream>
 #include <vector>
 #include <math.h>
-#include <stdbool.h>
 #include "profile.hpp"
 #include "star.hpp"
 #include "spot.hpp"
@@ -146,7 +145,7 @@ bool Spot::isVisible(double phase) {
 }
 
 
-void Spot::scan(double phase, double& flux, std::vector<double>& profile, bool observeRV) {
+void Spot::scan(double phase, double& flux, std::vector<double>& profile, double wavelength, bool observeRV) {
     unsigned int iy, iz, i;
     double y, z, xsquared;
     double v_shift;
@@ -159,6 +158,11 @@ void Spot::scan(double phase, double& flux, std::vector<double>& profile, bool o
     double inv_phase = phase - 2*pi;
     double inclination = star.inclination;
     double npts;
+
+    if (!plage) {
+        intensity = planck(wavelength, spotTemp) / planck(wavelength, star.temperature);
+    }
+    star.intensity = planck(wavelength, star.temperature);
 
     // matrix R from spot_inverse_rotation
     double matrixPhase[3][3] = {{(1 - cos(inv_phase)) * cos(inclination) * cos(inclination) + cos(inv_phase), sin(inv_phase) * sin(inclination), (1 - cos(inv_phase)) * cos(inclination) * sin(inclination)},
@@ -219,7 +223,7 @@ void Spot::scan(double phase, double& flux, std::vector<double>& profile, bool o
                     if (plage) {
                         r_cos = sqrt(1. - rSquared);
                         spot_temp = star.temperature + 250.9 - 407.7 * r_cos + 190.9 * r_cos*r_cos;
-                        intensitySum += planck(5000e-10, spot_temp) / star.intensity;
+                        intensitySum += planck(wavelength, spot_temp) / star.intensity;
                         limbSum += 1 - star.limbLinear * (1 - r_cos) - star.limbQuadratic * (1 - r_cos)*(1 - r_cos);
                         npts += 1;
                     }

@@ -1,7 +1,6 @@
 #ifndef SIMULATION_HPP
 #define SIMULATION_HPP
 #include <vector>
-#include <stdbool.h>
 #include "spot.hpp"
 #include "star.hpp"
 
@@ -17,8 +16,6 @@ class Simulation {
         void setStar(double radius, double period, double inclination, double temperature, double spot_temp_diff, double linear_limb, double quadratic_limb);
 
         void addSpot(double latitude, double longitude, double size, bool plage);
-
-        void observe(std::vector<double>& time, std::vector<double>& flux, std::vector<double>& rv, bool observeRV);
 
         void observe(std::vector<double>& time, std::vector<double>& flux, std::vector<double>& rv, double wavelength, bool observeRV);
 
