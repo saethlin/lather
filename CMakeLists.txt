@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.6)
 project(lather)
 
 set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_COMPILER /usr/bin/clang++)
 
 set(SOURCE_FILES
         inih/cpp/INIReader.cpp
@@ -24,6 +25,6 @@ set(SOURCE_FILES
 
 link_libraries(gsl gslcblas)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -march=native")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -march=native -fno-omit-frame-pointer -O3 -funroll-loops")
 
 add_executable(lather ${SOURCE_FILES})

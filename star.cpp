@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <math.h>
+
 #include "profile.hpp"
 #include "fitrv.hpp"
 #include "star.hpp"
@@ -70,44 +71,70 @@ Star::Star(double radius, double period, double inclination, double temperature,
     profileQuiet = Profile(rv, ccfQuiet);
     profileActive = Profile(rv, ccfActive);
 
-    unsigned int iy, iz, k;
-    double y, z;
-    double v_shift, r_cos, rSquared, limbSum;
-    std::vector<double> ccfShifted;
-    fit_result = std::vector<double>(4);
-    ccfQuiet = std::vector<double>(profileQuiet.size);
+    ccfQuiet.clear();
 
-    fluxQuiet = 0;
-    for (iy = 0; iy <= gridSize; iy++) {
-        y = -1.0+iy*2.0/gridSize;
+    std::ostringstream pathstream;
+    pathstream << ".cache";
+    pathstream << gridSize;
 
-        v_shift = y * vrot * sin(inclination);
-        ccfShifted = profileQuiet.shift(v_shift);
+    auto cache_path = pathstream.str();
 
-        limbSum = 0.0;
+    std::ifstream cacheread(cache_path, std::ifstream::in);
+    if (cacheread.good()) {
+        cacheread >> fluxQuiet;
+        while (cacheread.good()) {
+            cacheread >> num;
+            ccfQuiet.push_back(num);
+        }
+        cacheread.close();
+    }
+    else {
+        unsigned int iy, iz, k;
+        double y, z;
+        double v_shift, r_cos, rSquared, limbSum;
+        std::vector<double> ccfShifted;
+        ccfQuiet = std::vector<double>(profileQuiet.size);
 
-        for (iz = 0; iz <= gridSize; iz++) {
-            z = -1.0+iz*2.0/gridSize;
+        fluxQuiet = 0;
+        for (iy = 0; iy <= gridSize; iy++) {
+            y = -1.0 + iy * 2.0 / gridSize;
 
-            rSquared = y*y + z*z;
+            v_shift = y * vrot * sin(inclination);
+            ccfShifted = profileQuiet.shift(v_shift);
 
-            if (rSquared <= 1) {
-                r_cos = sqrt(1 - rSquared);
-                limbSum += 1 - limbLinear*(1.-r_cos) - limbQuadratic*(1-r_cos)*(1-r_cos);
+            limbSum = 0.0;
+
+            for (iz = 0; iz <= gridSize; iz++) {
+                z = -1.0 + iz * 2.0 / gridSize;
+
+                rSquared = y * y + z * z;
+
+                if (rSquared <= 1) {
+                    r_cos = sqrt(1 - rSquared);
+                    limbSum += 1 - limbLinear * (1. - r_cos) - limbQuadratic * (1 - r_cos) * (1 - r_cos);
+                }
             }
-        }
 
-        for (k = 0; k < profileQuiet.size; k++) {
-            ccfQuiet[k] += ccfShifted[k] * limbSum;
-        }
+            for (k = 0; k < profileQuiet.size; k++) {
+                ccfQuiet[k] += ccfShifted[k] * limbSum;
+            }
 
-        fluxQuiet += limbSum;
+            fluxQuiet += limbSum;
+        }
+        // Write out to the cache
+        std::ofstream cachewrite(cache_path, std::ofstream::out);
+        cachewrite << fluxQuiet << '\n' << '\n';
+        for (const auto& num : ccfQuiet) {
+            cachewrite << num << '\n';
+        }
+        cachewrite.close();
     }
 
     // Compute the rv that will be fitted with no spots visible.
     std::vector<double> normProfile(ccfQuiet);
     normalize(normProfile);
 
+    fit_result = std::vector<double>(4);
     fit_result[0] = normProfile[normProfile.size()/2] - normProfile[0];
     fit_result[1] = profileQuiet.rv[normProfile.size()/2];
     fit_result[2] = 2.71; // TODO Remove this magic number
