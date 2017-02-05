@@ -62,10 +62,6 @@ inline int gauss_df(const gsl_vector* v, void* params, gsl_matrix* J) {
 
 inline void fit_rv(const std::vector<double>& rv_vector, const std::vector<double>& ccf_vector, std::vector<double>& ansatz) {
 
-//    for (const auto& val : ansatz) {
-  //      std::cout << val << std::endl;
-    //}
-
     // Stick the fit parameters into the struct that GSL needs
     gauss_params input_data {rv_vector.data(), ccf_vector.data(), rv_vector.size()};
 
@@ -96,10 +92,6 @@ inline void fit_rv(const std::vector<double>& rv_vector, const std::vector<doubl
     for (auto i = 0; i < ansatz.size(); i++) {
         ansatz[i] = gsl_vector_get(solver->x, i);
     }
-
-//    for (const auto& val : ansatz) {
-  //      std::cout << val << std::endl;
-    //}
 
     gsl_vector_free(param_vector);
     gsl_multifit_fdfsolver_free(solver);

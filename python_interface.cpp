@@ -98,7 +98,11 @@ static PyObject* PySimulation_observe(PySimulation* self, PyObject *args, PyObje
     std::vector<double> flux(time.size());
     std::vector<double> rv(time.size());
 
+    clock_t begin = clock();
     self->CppSimulation.observe(time, flux, rv, wavelength, observeRV);
+    clock_t end = clock();
+    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    std::cout << elapsed_secs << std::endl;
 
     // Copy std::vector outputs into a dict of numpy arrays
     PyObject* output_flux = PyArray_SimpleNew(1, dims, NPY_DOUBLE);

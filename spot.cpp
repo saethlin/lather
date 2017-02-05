@@ -195,8 +195,8 @@ void Spot::scan(double phase, double& flux, std::vector<double>& profile, double
             auto& ccfActiveShifted = star.profileActive.shift(v_shift);
         }
 
-        auto limbSum = 0;
-        double intensitySum = 0;
+        auto limbSum = 0.0;
+        auto intensitySum = 0.0;
 
         for (auto iz = iminz; iz < imaxz; iz++) {
             auto z = -1.0+iz*2.0/star.gridSize;
