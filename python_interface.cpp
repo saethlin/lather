@@ -70,7 +70,7 @@ static PyObject* PySimulation_add_spot(PySimulation* self, PyObject* args, PyObj
 
 
 static PyObject* PySimulation_clear_spots(PySimulation* self) {
-    self->CppSimulation.spots.clear();
+    self->CppSimulation.clear_spots();
     Py_RETURN_NONE;
 }
 
@@ -123,7 +123,7 @@ static PyObject* PySimulation_observe(PySimulation* self, PyObject *args, PyObje
     return results;
 }
 
-
+/*
 static PyObject* PySimulation_fit(PySimulation* self, PyObject *args, PyObject* kwargs) {
     PyObject* timeArg = NULL;
     PyObject* fluxArg = NULL;
@@ -154,8 +154,9 @@ static PyObject* PySimulation_fit(PySimulation* self, PyObject *args, PyObject* 
     self->CppSimulation.fit(time, flux);
     Py_RETURN_NONE;
 }
+*/
 
-
+/*
 static PyObject* PySimulation_str(PySimulation* self) {
     std::ostringstream reprStream;
     reprStream << std::boolalpha;
@@ -182,6 +183,7 @@ static PyObject* PySimulation_str(PySimulation* self) {
 
     return PyUnicode_FromString(reprStream.str().c_str());
 }
+*/
 
 
 static PyMethodDef PySimulation_methods[] = {
@@ -193,10 +195,10 @@ static PyMethodDef PySimulation_methods[] = {
      "Remove all spots on the simulation"},
     {"observe", (PyCFunction)PySimulation_observe, METH_KEYWORDS|METH_VARARGS,
      "Compute simulated observations at the given times"},
-    {"fit", (PyCFunction)PySimulation_fit, METH_KEYWORDS|METH_VARARGS,
-     "Attempt to fit data with the current simulation"},
-    {"toString", (PyCFunction)PySimulation_str, METH_NOARGS,
-     "Produce a string representation"},
+    //{"fit", (PyCFunction)PySimulation_fit, METH_KEYWORDS|METH_VARARGS,
+    // "Attempt to fit data with the current simulation"},
+    //{"toString", (PyCFunction)PySimulation_str, METH_NOARGS,
+    // "Produce a string representation"},
     {NULL}  /* Sentinel */
 };
 
@@ -211,7 +213,7 @@ static PyTypeObject PySimulationType = {
     0,                         /* tp_getattr */
     0,                         /* tp_setattr */
     0,                         /* tp_reserved */
-    (reprfunc)PySimulation_str,          /* tp_repr */
+    0, //(reprfunc)PySimulation_str,          /* tp_repr */
     0,                         /* tp_as_number */
     0,                         /* tp_as_sequence */
     0,                         /* tp_as_mapping */

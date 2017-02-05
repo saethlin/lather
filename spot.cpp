@@ -4,14 +4,19 @@
 const double pi = M_PI;
 
 
-Spot::Spot(Star star, double latitude, double longitude, double size, bool plage, int spotResolution) {
+struct point {
+    double x, y, z;
+};
+
+// Apply latitude, longitude, and inclination rotations to get initial position
+
+
+
+Spot::Spot(Star star, double latitude, double longitude, double size, bool plage, size_t spotResolution) {
     latitude *= pi/180.;
     longitude *= pi/180.;
     this -> star = star;
-    this -> latitude = latitude;
-    this -> longitude = longitude;
     this -> size = size;
-    this -> spotResolution = spotResolution;
     this -> plage = plage;
 
     if (!plage) {
@@ -24,8 +29,8 @@ Spot::Spot(Star star, double latitude, double longitude, double size, bool plage
     initialCoordinates = std::vector<std::vector<double> > (spotResolution, std::vector<double>(3));
 
 
-    for (int i = 0; i < initialCoordinates.size(); i++) {
-        double rho = -pi + i*2*pi/(spotResolution-1);     // For this case, phase goes from -pi to pi (no idea why)
+    for (auto i = 0; i < initialCoordinates.size(); i++) {
+        auto rho = -pi + i*2*pi/(spotResolution-1);     // For this case, phase goes from -pi to pi
         centeredCoordinates[i][0] = sqrt(1 - size*size);
         centeredCoordinates[i][1] = size * cos(rho);
         centeredCoordinates[i][2] = size * sin(rho);
@@ -88,17 +93,17 @@ bool Spot::isVisible(double phase) {
 
     // Search for bounds by applying the rotation matrix to the initial coordinates
     // x coordinate is depth, so proceed only if the spot is on the front of the star
-    for (unsigned int i = 0; i < initialCoordinates.size(); i++) {
+    for (auto i = 0; i < initialCoordinates.size(); i++) {
         newx = rotation[0][0]*initialCoordinates[i][0] + rotation[0][1]*initialCoordinates[i][1] + rotation[0][2]*initialCoordinates[i][2];
         if (newx > 0) {
             countOn += 1;
             newy = rotation[1][0]*initialCoordinates[i][0] + rotation[1][1]*initialCoordinates[i][1] + rotation[1][2]*initialCoordinates[i][2];
-            if (newy < miny) miny = newy;
-            if (newy > maxy) maxy = newy;
+            miny = std::min(miny, newy);
+            maxy = std::max(maxy, newy);
 
             newz = rotation[2][0]*initialCoordinates[i][0] + rotation[2][1]*initialCoordinates[i][1] + rotation[2][2]*initialCoordinates[i][2];
-            if (newz < minz) minz = newz;
-            if (newz > maxz) maxz = newz;
+            minz = std::min(minz, newz);
+            maxz = std::max(maxz, newz);
         }
         else {
             countOff += 1;
@@ -141,18 +146,10 @@ bool Spot::isVisible(double phase) {
 
 
 void Spot::scan(double phase, double& flux, std::vector<double>& profile, double wavelength, bool observeRV) {
-    unsigned int iy, iz, i;
-    double y, z, xsquared;
-    double v_shift;
-    double spot_temp, limbSum;
-    double coordinatesReal[3];
-    double depth, r_cos, rSquared;
     std::vector<double> ccfShifted;
     std::vector<double> ccfActiveShifted;
 
-    double inv_phase = phase - 2*pi;
     double inclination = star.inclination;
-    double npts;
 
     // TODO Move this to Simulation.observe
     if (!plage) {
@@ -161,24 +158,25 @@ void Spot::scan(double phase, double& flux, std::vector<double>& profile, double
     star.intensity = planck(wavelength, star.temperature);
 
     // matrix R from spot_inverse_rotation
+    auto inv_phase = phase - 2*pi;
     double matrixPhase[3][3] = {{(1 - cos(inv_phase)) * cos(inclination) * cos(inclination) + cos(inv_phase), sin(inv_phase) * sin(inclination), (1 - cos(inv_phase)) * cos(inclination) * sin(inclination)},
                                 {-sin(inv_phase) * sin(inclination), cos(inv_phase), sin(inv_phase) * cos(inclination)},
                                 {(1 - cos(inv_phase)) * sin(inclination) * cos(inclination), -sin(inv_phase) * cos(inclination), (1 - cos(inv_phase)) * sin(inclination) * sin(inclination) + cos(inv_phase)}};
 
     /*
-    double matrixScanner[3][3];
+    double rotate_to_center[3][3];
     for (int r = 0; r < 3; r++) {
         for (int c = 0; c < 3; c++) {
-            matrixScanner[r][c] = 0.;
+            rotate_to_center[r][c] = 0.;
             for (int k = 0; k < 3; k++) {
-                matrixScanner[r][c] += matrixPhase[r][k] * matrixSpot[k][c];
+                rotate_to_center[r][c] += matrixPhase[r][k] * matrixSpot[k][c];
             }
         }
     }
     */
 
     // TODO Why doesn't the above code do the same thing
-    double matrixScanner[3][3] = {{matrixSpot[0][0]*matrixPhase[0][0]+matrixSpot[0][1]*matrixPhase[1][0]+matrixSpot[0][2]*matrixPhase[2][0],
+    double rotate_to_center[3][3] = {{matrixSpot[0][0]*matrixPhase[0][0]+matrixSpot[0][1]*matrixPhase[1][0]+matrixSpot[0][2]*matrixPhase[2][0],
                                    matrixSpot[0][0]*matrixPhase[0][1]+matrixSpot[0][1]*matrixPhase[1][1]+matrixSpot[0][2]*matrixPhase[2][1],
                                    matrixSpot[0][0]*matrixPhase[0][2]+matrixSpot[0][1]*matrixPhase[1][2]+matrixSpot[0][2]*matrixPhase[2][2]},
                                   {matrixSpot[1][0]*matrixPhase[0][0]+matrixSpot[1][1]*matrixPhase[1][0]+matrixSpot[1][2]*matrixPhase[2][0],
@@ -188,49 +186,41 @@ void Spot::scan(double phase, double& flux, std::vector<double>& profile, double
                                    matrixSpot[2][0]*matrixPhase[0][1]+matrixSpot[2][1]*matrixPhase[1][1]+matrixSpot[2][2]*matrixPhase[2][1],
                                    matrixSpot[2][0]*matrixPhase[0][2]+matrixSpot[2][1]*matrixPhase[1][2]+matrixSpot[2][2]*matrixPhase[2][2]}};
 
-    for (iy = iminy; iy < imaxy; iy++) {
+    for (auto iy = iminy; iy < imaxy; iy++) {
         auto y = -1.0+iy*2.0/star.gridSize;
-        coordinatesReal[1] = y;
 
         if (observeRV) {
-            v_shift = y * star.vrot * sin(star.inclination);
-            ccfShifted = star.profileQuiet.shift(v_shift);
-            ccfActiveShifted = star.profileActive.shift(v_shift);
+            auto v_shift = y * star.vrot * sin(star.inclination);
+            auto& ccfShifted = star.profileQuiet.shift(v_shift);
+            auto& ccfActiveShifted = star.profileActive.shift(v_shift);
         }
 
-        limbSum = 0;
-        npts = 0;
+        auto limbSum = 0;
         double intensitySum = 0;
 
-        for (iz = iminz; iz < imaxz; iz++) {
+        for (auto iz = iminz; iz < imaxz; iz++) {
             auto z = -1.0+iz*2.0/star.gridSize;
-            xsquared = y*y + z*z;
+            auto xsquared = y*y + z*z;
             if (xsquared < 1.) { // If on the disk
-                coordinatesReal[0] = sqrt(1.-xsquared);
-                coordinatesReal[2] = z;
 
                 // Rotate spot to the center of the star and check the x-coordinate, depth.
-                // This is a nifty way to check if the coordinate is on the spot but assumes
-                depth = matrixScanner[0][0]*coordinatesReal[0] + matrixScanner[0][1]*coordinatesReal[1] + matrixScanner[0][2]*coordinatesReal[2];
+                // This is a nifty way to check if the coordinate is on the spot
+                auto depth = rotate_to_center[0][0]*sqrt(1-xsquared) + rotate_to_center[0][1]*y + rotate_to_center[0][2]*z;
 
                 if (depth*depth >= (1 - size*size)) { // If actually on the spot
-                    rSquared = (y*y + z*z);
+                    auto rSquared = (y*y + z*z);
 
+                    auto r_cos = sqrt(1. - rSquared);
+                    // TODO Fix this case, no wonder plages don't work
                     if (plage) {
-                        r_cos = sqrt(1. - rSquared);
-                        spot_temp = star.temperature + 250.9 - 407.7 * r_cos + 190.9 * r_cos*r_cos;
+                        auto spot_temp = star.temperature + 250.9 - 407.7 * r_cos + 190.9 * r_cos*r_cos;
                         intensitySum += planck(wavelength, spot_temp) / star.intensity;
-                        limbSum += 1 - star.limbLinear * (1 - r_cos) - star.limbQuadratic * (1 - r_cos)*(1 - r_cos);
-                        npts += 1;
                     }
-                    else {
-                        r_cos = sqrt(1. - rSquared);
-                        limbSum += 1 - star.limbLinear * (1 - r_cos) - star.limbQuadratic * (1 - r_cos)*(1 - r_cos);
-                    }
+                    limbSum += 1 - star.limbLinear * (1 - r_cos) - star.limbQuadratic * (1 - r_cos)*(1 - r_cos);
                 }
             }
         }
-        for (i = 0; i < ccfShifted.size(); i++) {
+        for (auto i = 0; i < ccfShifted.size(); i++) {
             profile[i] += (ccfShifted[i] - intensity * ccfActiveShifted[i]) * limbSum;
         }
 

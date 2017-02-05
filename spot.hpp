@@ -8,22 +8,18 @@
 
 
 class Spot {
-    public:
-        Spot(Star star, double latitude, double longitude, double size, bool plage, int spotResolution);
+public:
+    Spot(Star star, double latitude, double longitude, double fillfactor, bool plage, size_t spotResolution);
+    bool isVisible(double phase);
+    void scan(double phase, double& flux, std::vector<double>& profile, double wavelength, bool observeRV);
 
-        bool isVisible(double phase);
-
-        void scan(double phase, double& flux, std::vector<double>& profile, double wavelength, bool observeRV);
-
-        Star star;
-        double latitude;
-        double longitude;
-        double size;
-        int spotResolution;
-        bool plage;
-        double spotTemp, intensity;
-        double matrixSpot[3][3];
-        std::vector<std::vector<double> > initialCoordinates;
-        int iminy, imaxy, iminz, imaxz;
+private:
+    Star star;
+    double size;
+    bool plage;
+    double spotTemp, intensity;
+    double matrixSpot[3][3];
+    std::vector<std::vector<double> > initialCoordinates;
+    int iminy, imaxy, iminz, imaxz;
 };
 #endif

@@ -74,6 +74,11 @@ void Simulation::addSpot(double latitude, double longitude, double size, bool pl
 }
 
 
+void Simulation::clear_spots() {
+    this->spots.clear();
+}
+
+
 void Simulation::observe(std::vector<double>& time, std::vector<double>& flux, std::vector<double>& rv, double wavelength, bool observeRV) {
     unsigned int s, t, i;
     double phase;

@@ -20,10 +20,9 @@ Star::Star() {}
 
 Star::Star(double radius, double period, double inclination, double temperature, double spotTempDiff,
            double limbLinear, double limbQuadratic, size_t gridSize) {
-    inclination *= pi/180.0;
     this -> period = period;
     this -> vrot = (2*pi * radius*solarRadius)/(period * days_to_seconds);
-    this -> inclination = inclination;
+    this -> inclination = inclination * pi/180.0;
     this -> temperature = temperature;
     this -> spotTempDiff = spotTempDiff;
     this -> limbLinear = limbLinear;
@@ -65,10 +64,11 @@ Star::Star(double radius, double period, double inclination, double temperature,
     profileQuiet = Profile(rv, ccfQuiet);
     profileActive = Profile(rv, ccfActive);
 
-    /*
     std::ostringstream pathstream;
-    pathstream << ".cache";
-    pathstream << gridSize;
+    pathstream << ".lathercache";
+    pathstream << "_grid" << gridSize;
+    pathstream << "_incl" << inclination;
+    pathstream << "_period" << period;
 
     auto cache_path = pathstream.str();
 
@@ -82,16 +82,16 @@ Star::Star(double radius, double period, double inclination, double temperature,
         cacheread.close();
     }
 
-    else {*/
+    else {
         integrated_ccf = std::vector<double>(profileQuiet.size());
 
         for (const auto& y : grid_steps) {
-            auto v_shift = y * vrot * sin(inclination);
+            auto v_shift = y * vrot * sin(this->inclination);
             auto& ccfShifted = profileQuiet.shift(v_shift);
             auto limbSum = 0.0;
 
             for (const auto& z : grid_steps) {
-                auto rSquared = y * y + z * z;
+                auto rSquared = y*y + z*z;
 
                 if (rSquared <= 1) {
                     auto r_cos = sqrt(1 - rSquared);
@@ -105,7 +105,6 @@ Star::Star(double radius, double period, double inclination, double temperature,
 
             fluxQuiet += limbSum;
         }
-    /*
         // Write out to the cache
         std::ofstream cachewrite(cache_path, std::ofstream::out);
         cachewrite << fluxQuiet << '\n' << '\n';
@@ -113,7 +112,7 @@ Star::Star(double radius, double period, double inclination, double temperature,
             cachewrite << num << '\n';
         }
         cachewrite.close();
-    }*/
+    }
 
     // Compute the rv that will be fitted with no spots visible.
     std::vector<double> normProfile(integrated_ccf);
