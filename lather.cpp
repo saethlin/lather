@@ -1,19 +1,21 @@
-#include <string>
-#include <sstream>
-#include <iostream>
 #include "simulation.hpp"
+#include <iostream>
 
 
 int main() {
-
+    clock_t begin = clock();
     Simulation simulation("/home/ben/lather/config.cfg");
-    std::vector<double> time(1000);
-    for (unsigned int i = 0; i < time.size(); i++) {
-        time[i] = (float)i/time.size()*25.05;
+    size_t npoints = 25;
+    std::vector<double> time(npoints);
+    for (auto i = 0; i < time.size(); i++) {
+        time[i] = (double)i/time.size()*25.05;
     }
-    std::vector<double> flux(1000);
-    std::vector<double> rv(1000);
+    std::vector<double> flux(npoints);
+    std::vector<double> rv(npoints);
     simulation.observe(time, flux, rv, 5000e-10, true);
+    clock_t end = clock();
+    double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
+    std::cout << elapsed_secs << std::endl;
 
     return 0;
 }

@@ -1,11 +1,3 @@
-#include <iostream>
-#include <string>
-#include <vector>
-#include "inih/cpp/INIReader.h"
-#include "star.hpp"
-#include "spot.hpp"
-#include "fitrv.hpp"
-#include "fitsim.hpp"
 #include "simulation.hpp"
 
 const double pi = M_PI;
@@ -88,7 +80,7 @@ void Simulation::observe(std::vector<double>& time, std::vector<double>& flux, s
     double spotFlux = 0;
     bool anyVisible = false;
 
-    std::vector<double> spotProfile(star.profileQuiet.ccf.size());
+    std::vector<double> spotProfile(star.profileQuiet.size());
     std::vector<double> fit_result = star.fit_result;
 
     for (t = 0; t < time.size(); t++) {
@@ -110,10 +102,10 @@ void Simulation::observe(std::vector<double>& time, std::vector<double>& flux, s
             if (observeRV) {
                 // Compute the observed profile and fit the rv: the star's quiet profile minus the spot flux
                 for (i = 0; i < spotProfile.size(); i++) {
-                    spotProfile[i] = star.ccfQuiet[i] - spotProfile[i];
+                    spotProfile[i] = star.integrated_ccf[i] - spotProfile[i];
                 }
                 normalize(spotProfile);
-                fit_rv(star.profileQuiet.rv, spotProfile, fit_result);
+                fit_rv(star.profileQuiet.rv(), spotProfile, fit_result);
                 rv[t] = fit_result[1] - star.zero_rv;
 
                 for (i = 0; i < spotProfile.size(); i++) {
@@ -130,6 +122,8 @@ void Simulation::observe(std::vector<double>& time, std::vector<double>& flux, s
 }
 
 
+/*
 void Simulation::fit(std::vector<double>& time, std::vector<double>& flux) {
     fit_sim(this, time, flux);
 }
+*/

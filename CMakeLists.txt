@@ -5,23 +5,14 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_COMPILER /usr/bin/clang++)
 
 set(SOURCE_FILES
-        inih/cpp/INIReader.cpp
-        inih/cpp/INIReader.h
-        inih/ini.c
-        inih/ini.h
-        fitrv.cpp
+        inih/cpp/INIReader.h inih/cpp/INIReader.cpp
+        inih/ini.h inih/ini.c
         fitrv.hpp
-        fitsim.cpp
-        fitsim.hpp
-        lather.cpp
-        profile.cpp
-        profile.hpp
-        simulation.cpp
-        simulation.hpp
-        spot.cpp
-        spot.hpp
-        star.cpp
-        star.hpp)
+        simulation.hpp simulation.cpp
+        spot.hpp spot.cpp
+        star.hpp star.cpp
+        profile.hpp profile.cpp
+        lather.cpp)
 
 link_libraries(gsl gslcblas)
 

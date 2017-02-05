@@ -1,8 +1,12 @@
 #ifndef SIMULATION_HPP
 #define SIMULATION_HPP
-#include <vector>
+
+
 #include "spot.hpp"
 #include "star.hpp"
+#include "fitrv.hpp"
+#include "inih/cpp/INIReader.h"
+#include <vector>
 
 
 class Simulation {
@@ -19,7 +23,7 @@ class Simulation {
 
         void observe(std::vector<double>& time, std::vector<double>& flux, std::vector<double>& rv, double wavelength, bool observeRV);
 
-        void fit(std::vector<double>& time, std::vector<double>& flux);
+        //void fit(std::vector<double>& time, std::vector<double>& flux);
 
         unsigned int gridSize;
         unsigned int spotResolution;

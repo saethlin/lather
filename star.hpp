@@ -1,7 +1,17 @@
 #ifndef STAR_HPP
 #define STAR_HPP
-#include <vector>
+
+
 #include "profile.hpp"
+#include "fitrv.hpp"
+#include <vector>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <math.h>
+
 
 void normalize(std::vector<double>& vec);
 
@@ -9,21 +19,19 @@ class Star {
     public:
         Star();
         Star(double radius, double period, double inclination, double temperature, double spotTempDiff,
-                        double limbLinear, double limbQuadratic, unsigned int gridSize);
+                        double limbLinear, double limbQuadratic, size_t gridSize);
 
-        double radius;
         double vrot;
         double period;
         double inclination;
         double temperature, spotTempDiff;
         double limbLinear, limbQuadratic;
         double intensity;
-        unsigned int gridSize;
-        int spotResolution;
+        size_t gridSize;
         Profile profileQuiet;
         Profile profileActive;
-        double fluxQuiet;
-        std::vector<double> ccfQuiet;
+        double fluxQuiet = 0;
+        std::vector<double> integrated_ccf;
         std::vector<double> limb;
         double zero_rv;
         std::vector<double> fit_result;

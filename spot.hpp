@@ -1,7 +1,10 @@
 #ifndef SPOT_HPP
 #define SPOT_HPP
 #include <vector>
+#include <math.h>
 #include "star.hpp"
+#include "profile.hpp"
+
 
 
 class Spot {

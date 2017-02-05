@@ -1,8 +1,3 @@
-#include <iostream>
-#include <vector>
-#include <math.h>
-#include "profile.hpp"
-#include "star.hpp"
 #include "spot.hpp"
 
 
@@ -159,6 +154,7 @@ void Spot::scan(double phase, double& flux, std::vector<double>& profile, double
     double inclination = star.inclination;
     double npts;
 
+    // TODO Move this to Simulation.observe
     if (!plage) {
         intensity = planck(wavelength, spotTemp) / planck(wavelength, star.temperature);
     }
@@ -193,7 +189,7 @@ void Spot::scan(double phase, double& flux, std::vector<double>& profile, double
                                    matrixSpot[2][0]*matrixPhase[0][2]+matrixSpot[2][1]*matrixPhase[1][2]+matrixSpot[2][2]*matrixPhase[2][2]}};
 
     for (iy = iminy; iy < imaxy; iy++) {
-        y = -1.0+iy*2.0/star.gridSize;
+        auto y = -1.0+iy*2.0/star.gridSize;
         coordinatesReal[1] = y;
 
         if (observeRV) {
@@ -207,7 +203,7 @@ void Spot::scan(double phase, double& flux, std::vector<double>& profile, double
         double intensitySum = 0;
 
         for (iz = iminz; iz < imaxz; iz++) {
-            z = -1.0+iz*2.0/star.gridSize;
+            auto z = -1.0+iz*2.0/star.gridSize;
             xsquared = y*y + z*z;
             if (xsquared < 1.) { // If on the disk
                 coordinatesReal[0] = sqrt(1.-xsquared);
