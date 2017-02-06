@@ -23,7 +23,7 @@ private:
     bool plage;
     double spotTemp, intensity;
     double matrixSpot[3][3];
-    std::vector<std::vector<double> > initialCoordinates;
+    std::vector<point> initialCoordinates;
     int iminy, imaxy, iminz, imaxz;
 };
 #endif

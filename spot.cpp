@@ -17,15 +17,15 @@ Spot::Spot(Star star, double latitude, double longitude, double fillfactor, bool
     }
 
     //Compute initial location
-    std::vector<std::vector<double> > centeredCoordinates(spotResolution, std::vector<double> (3));
-    initialCoordinates = std::vector<std::vector<double> > (spotResolution, std::vector<double>(3));
+    std::vector<point> centeredCoordinates(spotResolution);
+    initialCoordinates = std::vector<point>(spotResolution);
 
 
     for (auto i = 0; i < initialCoordinates.size(); i++) {
         auto rho = -pi + i*2*pi/(spotResolution-1);     // For this case, phase goes from -pi to pi
-        centeredCoordinates[i][0] = sqrt(1 - size*size);
-        centeredCoordinates[i][1] = size * cos(rho);
-        centeredCoordinates[i][2] = size * sin(rho);
+        centeredCoordinates[i].x = sqrt(1 - size*size);
+        centeredCoordinates[i].y = size * cos(rho);
+        centeredCoordinates[i].z = size * sin(rho);
     }
 
     // matrix R in the original code
@@ -54,9 +54,9 @@ Spot::Spot(Star star, double latitude, double longitude, double fillfactor, bool
 
     // Rotate centeredCoordinates to the correct location on the star's surface
     for (int i = 0; i < initialCoordinates.size(); i++) {
-        initialCoordinates[i][0] = matrixInit[0][0]*centeredCoordinates[i][0] + matrixInit[0][1]*centeredCoordinates[i][1] + matrixInit[0][2]*centeredCoordinates[i][2];
-        initialCoordinates[i][1] = matrixInit[1][0]*centeredCoordinates[i][0] + matrixInit[1][1]*centeredCoordinates[i][1] + matrixInit[1][2]*centeredCoordinates[i][2];
-        initialCoordinates[i][2] = matrixInit[2][0]*centeredCoordinates[i][0] + matrixInit[2][1]*centeredCoordinates[i][1] + matrixInit[2][2]*centeredCoordinates[i][2];
+        initialCoordinates[i].x = matrixInit[0][0]*centeredCoordinates[i].x + matrixInit[0][1]*centeredCoordinates[i].y + matrixInit[0][2]*centeredCoordinates[i].z;
+        initialCoordinates[i].y = matrixInit[1][0]*centeredCoordinates[i].x + matrixInit[1][1]*centeredCoordinates[i].y + matrixInit[1][2]*centeredCoordinates[i].z;
+        initialCoordinates[i].z = matrixInit[2][0]*centeredCoordinates[i].x + matrixInit[2][1]*centeredCoordinates[i].y + matrixInit[2][2]*centeredCoordinates[i].z;
     }
 
 
@@ -86,14 +86,14 @@ bool Spot::isVisible(double phase) {
     // Search for bounds by applying the rotation matrix to the initial coordinates
     // x coordinate is depth, so proceed only if the spot is on the front of the star
     for (auto i = 0; i < initialCoordinates.size(); i++) {
-        newx = rotation[0][0]*initialCoordinates[i][0] + rotation[0][1]*initialCoordinates[i][1] + rotation[0][2]*initialCoordinates[i][2];
+        newx = rotation[0][0]*initialCoordinates[i].x + rotation[0][1]*initialCoordinates[i].y + rotation[0][2]*initialCoordinates[i].z;
         if (newx > 0) {
             countOn += 1;
-            newy = rotation[1][0]*initialCoordinates[i][0] + rotation[1][1]*initialCoordinates[i][1] + rotation[1][2]*initialCoordinates[i][2];
+            newy = rotation[1][0]*initialCoordinates[i].x + rotation[1][1]*initialCoordinates[i].y + rotation[1][2]*initialCoordinates[i].z;
             miny = std::min(miny, newy);
             maxy = std::max(maxy, newy);
 
-            newz = rotation[2][0]*initialCoordinates[i][0] + rotation[2][1]*initialCoordinates[i][1] + rotation[2][2]*initialCoordinates[i][2];
+            newz = rotation[2][0]*initialCoordinates[i].x + rotation[2][1]*initialCoordinates[i].y + rotation[2][2]*initialCoordinates[i].z;
             minz = std::min(minz, newz);
             maxz = std::max(maxz, newz);
         }
@@ -183,8 +183,8 @@ void Spot::scan(double phase, double& flux, std::vector<double>& profile, double
 
         if (observeRV) {
             auto v_shift = y * star.vrot * sin(star.inclination);
-            auto& ccfShifted = star.profileQuiet.shift(v_shift);
-            auto& ccfActiveShifted = star.profileActive.shift(v_shift);
+            ccfShifted = star.profileQuiet.shift(v_shift);
+            ccfActiveShifted = star.profileActive.shift(v_shift);
         }
 
         auto limbSum = 0;
