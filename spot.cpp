@@ -4,16 +4,11 @@
 const double pi = M_PI;
 
 
-struct point {
-    double x, y, z;
-};
-
-
 Spot::Spot(Star star, double latitude, double longitude, double fillfactor, bool plage, size_t spotResolution) {
     latitude *= pi/180.;
     longitude *= pi/180.;
+    size = sqrt(2*fillfactor);
     this -> star = star;
-    this -> size = sqrt(2*fillfactor);
     this -> plage = plage;
 
     if (!plage) {
@@ -22,7 +17,7 @@ Spot::Spot(Star star, double latitude, double longitude, double fillfactor, bool
     }
 
     //Compute initial location
-    std::vector<std::vector<double> > centeredCoordinates(spotResolution, std::vector<double>(3));
+    std::vector<std::vector<double> > centeredCoordinates(spotResolution, std::vector<double> (3));
     initialCoordinates = std::vector<std::vector<double> > (spotResolution, std::vector<double>(3));
 
 
@@ -192,8 +187,8 @@ void Spot::scan(double phase, double& flux, std::vector<double>& profile, double
             auto& ccfActiveShifted = star.profileActive.shift(v_shift);
         }
 
-        auto limbSum = 0.0;
-        auto intensitySum = 0.0;
+        auto limbSum = 0;
+        double intensitySum = 0;
 
         for (auto iz = iminz; iz < imaxz; iz++) {
             auto z = -1.0+iz*2.0/star.gridSize;

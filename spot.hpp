@@ -6,6 +6,10 @@
 #include "profile.hpp"
 
 
+struct point {
+    double x, y, z;
+};
+
 
 class Spot {
 public:
