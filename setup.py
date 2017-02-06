@@ -8,7 +8,7 @@ lather = Extension('lather',
                    include_dirs=['/usr/local/include', '/usr/local/include/gsl'],
                    library_dirs=['/usr/local/lib'],
                    libraries=['gsl', 'gslcblas'],
-                   extra_compile_args=['-std=c++11', '-O3', '-fno-omit-frame-pointer'])
+                   extra_compile_args=['-std=c++11', '-Ofast'])
 
 setup(name='lather',
       version='0.0.1',

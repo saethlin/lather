@@ -7,13 +7,14 @@
 #include "fitrv.hpp"
 #include "inih/cpp/INIReader.h"
 #include <vector>
+#include <algorithm>
 
 
 class Simulation {
 public:
-    Simulation() {}
+    //Simulation() {}
     Simulation(const char* filename);
-    Simulation(unsigned int gridSize, unsigned int spotResolution);
+    Simulation(size_t gridSize, size_t spotResolution);
     void setStar(double radius, double period, double inclination, double temperature, double spot_temp_diff, double linear_limb, double quadratic_limb);
     void addSpot(double latitude, double longitude, double size, bool plage);
     void clear_spots();
@@ -23,8 +24,8 @@ public:
     //void fit(std::vector<double>& time, std::vector<double>& flux);
 
 private:
-    unsigned int gridSize;
-    unsigned int spotResolution;
+    size_t gridSize;
+    size_t spotResolution;
     Star star;
     std::vector<Spot> spots;
 };

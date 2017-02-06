@@ -8,15 +8,12 @@ struct point {
     double x, y, z;
 };
 
-// Apply latitude, longitude, and inclination rotations to get initial position
 
-
-
-Spot::Spot(Star star, double latitude, double longitude, double size, bool plage, size_t spotResolution) {
+Spot::Spot(Star star, double latitude, double longitude, double fillfactor, bool plage, size_t spotResolution) {
     latitude *= pi/180.;
     longitude *= pi/180.;
     this -> star = star;
-    this -> size = size;
+    this -> size = sqrt(2*fillfactor);
     this -> plage = plage;
 
     if (!plage) {
@@ -25,7 +22,7 @@ Spot::Spot(Star star, double latitude, double longitude, double size, bool plage
     }
 
     //Compute initial location
-    std::vector<std::vector<double> > centeredCoordinates(spotResolution, std::vector<double> (3));
+    std::vector<std::vector<double> > centeredCoordinates(spotResolution, std::vector<double>(3));
     initialCoordinates = std::vector<std::vector<double> > (spotResolution, std::vector<double>(3));
 
 
