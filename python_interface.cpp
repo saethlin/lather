@@ -1,12 +1,11 @@
-//#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#include "simulation.hpp"
 #include <exception>
 #include <stdio.h>
 #include <sstream>
 #include <vector>
-#include <stdbool.h>
 #include <Python.h>
 #include <numpy/arrayobject.h>
-#include "simulation.hpp"
 
 
 typedef struct {
@@ -76,23 +75,19 @@ static PyObject* PySimulation_clear_spots(PySimulation* self) {
 
 
 static PyObject* PySimulation_observe(PySimulation* self, PyObject *args, PyObject *kwargs) {
-    PyObject* timeArg = NULL;
+    PyArrayObject* timeArg = NULL;
     double wavelength;
     bool observeRV;
     static char* kwdlist[] = {"time", "wavelength", "observe_rv", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Od|p", kwdlist, &timeArg, &wavelength, &observeRV)) {
-        return NULL;
-    }
-
-    PyObject* timeArr = PyArray_FROM_OTF(timeArg, NPY_DOUBLE, NPY_IN_ARRAY);
-    if (timeArr == NULL) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O!d|p", kwdlist,
+                                     &PyArray_Type, &timeArg, &wavelength, &observeRV)) {
         return NULL;
     }
 
     // Create an std::vector that points to the same data as the input array
-    npy_intp* dims = PyArray_DIMS(timeArr);
-    double* data = (double*)PyArray_DATA(timeArr);
+    npy_intp* dims = PyArray_DIMS(timeArg);
+    auto data = (double*)PyArray_DATA(timeArg);
     std::vector<double> time(data, data+dims[0]);
 
     std::vector<double> flux(time.size());
@@ -100,12 +95,23 @@ static PyObject* PySimulation_observe(PySimulation* self, PyObject *args, PyObje
 
     self->CppSimulation.observe(time, flux, rv, wavelength, observeRV);
 
+
+    /*
+    auto dispersion = inplace_phase_fold(data, periods);
+
+    PyObject* output = PyArray_SimpleNew(1, dims, NPY_DOUBLE);
+    auto output_data = (double*)PyArray_DATA((PyArrayObject*)output);
+    for (auto i = 0; i < dispersion.size(); i++) {
+        output_data[i] = dispersion[i];
+    }
+*/
+
     // Copy std::vector outputs into a dict of numpy arrays
     PyObject* output_flux = PyArray_SimpleNew(1, dims, NPY_DOUBLE);
     PyObject* output_rv = PyArray_SimpleNew(1, dims, NPY_DOUBLE);
 
-    double* output_flux_data = (double*)PyArray_DATA(output_flux);
-    double* output_rv_data = (double*)PyArray_DATA(output_rv);
+    double* output_flux_data = (double*)PyArray_DATA((PyArrayObject*)output_flux);
+    double* output_rv_data = (double*)PyArray_DATA((PyArrayObject*)output_rv);
     for (int i = 0; i < dims[0]; i++) {
         output_rv_data[i] = rv[i];
         output_flux_data[i] = flux[i];
