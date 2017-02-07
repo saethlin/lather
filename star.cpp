@@ -71,7 +71,7 @@ Star::Star(double radius, double period, double inclination, double temperature,
     pathstream << "_period" << period;
 
     auto cache_path = pathstream.str();
-
+    /*
     std::ifstream cacheread(cache_path, std::ifstream::in);
     if (cacheread.good()) {
         cacheread >> fluxQuiet;
@@ -82,12 +82,23 @@ Star::Star(double radius, double period, double inclination, double temperature,
         cacheread.close();
     }
 
-    else {
+    else {*/
         integrated_ccf = std::vector<double>(profileQuiet.size());
 
         for (const auto& y : grid_steps) {
             auto v_shift = y * vrot * sin(this->inclination);
             auto& ccfShifted = profileQuiet.shift(v_shift);
+
+            auto z_bound = sqrt(1-y*y);
+            auto r_cos  = sqrt(1 - y*y - z_bound*z_bound);
+
+            if (z_bound == 0) {
+                continue;
+            }
+
+            double limbSum;
+
+            /*
             auto limbSum = 0.0;
 
             for (const auto& z : grid_steps) {
@@ -98,13 +109,14 @@ Star::Star(double radius, double period, double inclination, double temperature,
                     limbSum += 1 - limbLinear * (1. - r_cos) - limbQuadratic * (1 - r_cos) * (1 - r_cos);
                 }
             }
-
+*/
             for (auto k = 0; k < profileQuiet.size(); k++) {
                 integrated_ccf[k] += ccfShifted[k] * limbSum;
             }
 
             fluxQuiet += limbSum;
         }
+        /*
         // Write out to the cache
         std::ofstream cachewrite(cache_path, std::ofstream::out);
         cachewrite << fluxQuiet << '\n' << '\n';
@@ -112,7 +124,8 @@ Star::Star(double radius, double period, double inclination, double temperature,
             cachewrite << num << '\n';
         }
         cachewrite.close();
-    }
+
+    }*/
 
     // Compute the rv that will be fitted with no spots visible.
     std::vector<double> normProfile(integrated_ccf);
@@ -126,4 +139,9 @@ Star::Star(double radius, double period, double inclination, double temperature,
 
     fit_rv(profileQuiet.rv(), normProfile, fit_result);
     zero_rv = fit_result[1];
+
+    for (const auto& val : normProfile) {
+        std::cout << val << std::endl;
+    }
+    exit(0);
 }
