@@ -66,6 +66,11 @@ void Simulation::clear_spots() {
 
 
 void Simulation::observe(std::vector<double>& time, std::vector<double>& flux, std::vector<double>& rv, double wavelength, bool observeRV) {
+    star.intensity = planck(wavelength, star.temperature);
+    for (auto& spot : spots) {
+        spot.intensity = planck(wavelength, spot.temperature) / star.intensity;
+    }
+
     std::vector<double> spotProfile(star.profileQuiet.size());
     std::vector<double> fit_result = star.fit_result;
 
@@ -106,6 +111,7 @@ void Simulation::observe(std::vector<double>& time, std::vector<double>& flux, s
         }
     }
     normalize(flux);
+    exit(0);
 }
 
 

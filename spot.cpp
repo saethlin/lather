@@ -10,11 +10,9 @@ Spot::Spot(Star star, double latitude, double longitude, double fillfactor, bool
     size = sqrt(2*fillfactor);
     this -> star = star;
     this -> plage = plage;
-
-    if (!plage) {
-        this -> spotTemp = star.temperature - star.spotTempDiff;
-        this -> intensity = planck(5293.4115e-10, spotTemp) / star.intensity;
-    }
+    this -> temperature = star.temperature - star.spotTempDiff;
+    this->latitude = latitude;
+    this->longitude = longitude;
 
     //Compute initial location
     std::vector<point> centeredCoordinates(spotResolution);
@@ -142,13 +140,6 @@ void Spot::scan(double phase, double& flux, std::vector<double>& profile, double
     std::vector<double> ccfActiveShifted;
 
     double inclination = star.inclination;
-
-    // TODO Move this to Simulation.observe
-    if (!plage) {
-        intensity = planck(wavelength, spotTemp) / planck(wavelength, star.temperature);
-    }
-    star.intensity = planck(wavelength, star.temperature);
-
     // matrix R from spot_inverse_rotation
     auto inv_phase = phase - 2*pi;
     double matrixPhase[3][3] = {{(1 - cos(inv_phase)) * cos(inclination) * cos(inclination) + cos(inv_phase), sin(inv_phase) * sin(inclination), (1 - cos(inv_phase)) * cos(inclination) * sin(inclination)},
@@ -187,35 +178,119 @@ void Spot::scan(double phase, double& flux, std::vector<double>& profile, double
             ccfActiveShifted = star.profileActive.shift(v_shift);
         }
 
-        double limbSum = 0.0;
-        double intensitySum = 0.0;
+        double limbSum = 0;
 
-        for (auto iz = iminz; iz < imaxz; iz++) {
-            auto z = -1.0+iz*2.0/star.gridSize;
-            auto xsquared = y*y + z*z;
-            if (xsquared < 1.) { // If on the disk
+        if (star.analytic) {
+            // Find the z extent of the spot
+            auto z_upper = -1.0 + iminz * 2.0 / star.gridSize;
+            auto z_lower = -1.0 * imaxz * 2.0 / star.gridSize;
 
-                // Rotate spot to the center of the star and check the x-coordinate, depth.
-                // This is a nifty way to check if the coordinate is on the spot
-                auto depth = rotate_to_center[0][0]*sqrt(1-xsquared) + rotate_to_center[0][1]*y + rotate_to_center[0][2]*z;
+            auto xsquared = y * y + z_upper * z_upper;
+            auto depth = rotate_to_center[0][0] * sqrt(1 - xsquared) + rotate_to_center[0][1] * y +
+                         rotate_to_center[0][2] * z_upper;
+            bool on_star = xsquared <= 1;
+            bool on_spot = depth * depth <= (1 - size * size);
 
-                if (depth*depth >= (1 - size*size)) { // If actually on the spot
-                    auto rSquared = (y*y + z*z);
+            while ((not on_star) or (not on_spot)) {
+                z_upper -= 2.0 / star.gridSize;
+                xsquared = y * y + z_upper * z_upper;
+                depth = rotate_to_center[0][0] * sqrt(1 - xsquared) + rotate_to_center[0][1] * y +
+                        rotate_to_center[0][2] * z_upper;
+                on_star = xsquared <= 1;
+                on_spot = depth * depth <= (1 - size * size);
+            }
 
-                    auto r_cos = sqrt(1. - rSquared);
-                    // TODO Fix this case, no wonder plages don't work
-                    if (plage) {
-                        auto spot_temp = star.temperature + 250.9 - 407.7 * r_cos + 190.9 * r_cos*r_cos;
-                        intensitySum += planck(wavelength, spot_temp) / star.intensity;
+            xsquared = y * y + z_lower * z_lower;
+            depth = rotate_to_center[0][0] * sqrt(1 - xsquared) + rotate_to_center[0][1] * y +
+                    rotate_to_center[0][2] * z_lower;
+            on_star = xsquared <= 1;
+            on_spot = depth * depth <= (1 - size * size);
+
+            while ((not on_star) or (not on_spot)) {
+                z_lower += 2.0 / star.gridSize;
+                xsquared = y * y + z_lower * z_lower;
+                depth = rotate_to_center[0][0] * sqrt(1 - xsquared) + rotate_to_center[0][1] * y +
+                        rotate_to_center[0][2] * z_lower;
+                on_star = xsquared <= 1;
+                on_spot = depth * depth <= (1 - size * size);
+            }
+
+            limbSum = star.limb_integral(z_upper, z_lower, y);
+        }
+        else {
+
+            double intensitySum = 0.0;
+
+            for (auto iz = iminz; iz < imaxz; iz++) {
+                auto z = -1.0 + iz * 2.0 / star.gridSize;
+                auto xsquared = y * y + z * z;
+                if (xsquared < 1.) { // If on the disk
+
+                    // Rotate spot to the center of the star and check the x-coordinate, depth.
+                    // This is a nifty way to check if the coordinate is on the spot
+                    auto depth = rotate_to_center[0][0] * sqrt(1 - xsquared) + rotate_to_center[0][1] * y +
+                                 rotate_to_center[0][2] * z;
+
+                    if (depth * depth >= (1 - size * size)) { // If actually on the spot
+                        auto rSquared = (y * y + z * z);
+
+                        auto r_cos = sqrt(1. - rSquared);
+                        // TODO Fix this case, no wonder plages don't work
+                        if (plage) {
+                            auto spot_temp = star.temperature + 250.9 - 407.7 * r_cos + 190.9 * r_cos * r_cos;
+                            intensitySum += planck(wavelength, spot_temp) / star.intensity;
+                        }
+                        limbSum += 1 - star.limbLinear * (1 - r_cos) - star.limbQuadratic * (1 - r_cos) * (1 - r_cos);
                     }
-                    limbSum += 1 - star.limbLinear * (1 - r_cos) - star.limbQuadratic * (1 - r_cos)*(1 - r_cos);
                 }
             }
         }
+
         for (auto i = 0; i < ccfShifted.size(); i++) {
             profile[i] += (ccfShifted[i] - intensity * ccfActiveShifted[i]) * limbSum;
         }
 
         flux += (1-intensity) * limbSum;
     }
+}
+
+
+struct Extent {
+    double min, max;
+    Extent clamp(double val) const {
+        return Extent(clamp(-val, min, val), clamp(-val, max, val));
+    }
+};
+
+
+bool Spot::isVisible2(double phase) {
+    double opening_angle = 0.1; //TODO this should be private member data
+
+    // Location in spherical coordinates
+    double theta = phase + longitude;
+    double phi = latitude;
+
+    // Convert to cartesian
+    auto center = Point(sin(theta)*cos(phi),
+                        sin(theta)*sin(phi),
+                        cos(theta));
+
+    // Apply inclination
+    center = center.rotate_y(star.inclination);
+
+    double z_extent = sqrt(1-center.y*center.y);
+    double y_extent = sqrt(1-center.z*center.z);
+
+    // Compute bounds by doing further rotations
+    double zmin = center.rotate_y(-opening_angle).z;
+    zmin = clamp(-z_extent, zmin, z_extent);
+    double zmax = center.rotate_y(opening_angle).z;c
+    zmax = clamp(-z_extent, zmax, z_extent);
+    double ymin = center.rotate_z(-opening_angle).y;
+    zmax = clamp(-y_extent, ymin, y_extent);
+    double ymax = center.rotate_z(opening_angle).y;
+    ymax = clamp(-y_extent, ymax, y_extent);
+
+    bool visible = center.x > -sqrt(2*size);
+    return visible;
 }

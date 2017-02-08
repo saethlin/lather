@@ -17,5 +17,9 @@ int main() {
     double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
     std::cout << elapsed_secs << std::endl;
 
+    for (const auto& val : rv) {
+        std::cout << val << std::endl;
+    }
+
     return 0;
 }

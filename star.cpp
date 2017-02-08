@@ -28,8 +28,9 @@ Star::Star(double radius, double period, double inclination, double temperature,
     this -> limbLinear = limbLinear;
     this -> limbQuadratic = limbQuadratic;
     this -> gridSize = gridSize;
-    this -> intensity = planck(5293.4115e-10, temperature);
+    analytic = false;
 
+    // This is a significant optimization for the purely numerical mode
     std::vector<double> grid_steps(gridSize+1);
     for (auto i = 0; i <= gridSize; i++) {
         grid_steps[i] = -1.0 + i * 2.0 / gridSize;
@@ -71,7 +72,7 @@ Star::Star(double radius, double period, double inclination, double temperature,
     pathstream << "_period" << period;
 
     auto cache_path = pathstream.str();
-    /*
+
     std::ifstream cacheread(cache_path, std::ifstream::in);
     if (cacheread.good()) {
         cacheread >> fluxQuiet;
@@ -82,41 +83,42 @@ Star::Star(double radius, double period, double inclination, double temperature,
         cacheread.close();
     }
 
-    else {*/
+    else {
         integrated_ccf = std::vector<double>(profileQuiet.size());
 
         for (const auto& y : grid_steps) {
             auto v_shift = y * vrot * sin(this->inclination);
             auto& ccfShifted = profileQuiet.shift(v_shift);
 
-            auto z_bound = sqrt(1-y*y);
-            auto r_cos  = sqrt(1 - y*y - z_bound*z_bound);
+            double limbSum = 0;
 
-            if (z_bound == 0) {
-                continue;
-            }
-
-            double limbSum;
-
-            /*
-            auto limbSum = 0.0;
-
-            for (const auto& z : grid_steps) {
-                auto rSquared = y*y + z*z;
-
-                if (rSquared <= 1) {
-                    auto r_cos = sqrt(1 - rSquared);
-                    limbSum += 1 - limbLinear * (1. - r_cos) - limbQuadratic * (1 - r_cos) * (1 - r_cos);
+            if (analytic) {
+                auto z_bound = sqrt(1 - y * y);
+                if (z_bound != 0) {
+                    limbSum = limb_integral(z_bound, -z_bound, y);
                 }
             }
-*/
+
+            else {
+                for (const auto &z : grid_steps) {
+                    auto rSquared = y * y + z * z;
+
+                    if (rSquared <= 1) {
+                        auto r_cos = sqrt(1 - rSquared);
+                        limbSum += (1 - limbLinear * (1. - r_cos) - limbQuadratic * (1 - r_cos) * (1 - r_cos));
+                    }
+                }
+            }
+
+            //std::cout << limbSum << '\n';
+
             for (auto k = 0; k < profileQuiet.size(); k++) {
                 integrated_ccf[k] += ccfShifted[k] * limbSum;
             }
 
             fluxQuiet += limbSum;
         }
-        /*
+
         // Write out to the cache
         std::ofstream cachewrite(cache_path, std::ofstream::out);
         cachewrite << fluxQuiet << '\n' << '\n';
@@ -125,7 +127,7 @@ Star::Star(double radius, double period, double inclination, double temperature,
         }
         cachewrite.close();
 
-    }*/
+    }
 
     // Compute the rv that will be fitted with no spots visible.
     std::vector<double> normProfile(integrated_ccf);
@@ -140,8 +142,24 @@ Star::Star(double radius, double period, double inclination, double temperature,
     fit_rv(profileQuiet.rv(), normProfile, fit_result);
     zero_rv = fit_result[1];
 
-    for (const auto& val : normProfile) {
-        std::cout << val << std::endl;
+    //for (const auto& val : normProfile) std::cout << val << '\n';
+    //exit(0);
+}
+
+
+double Star::limb_integral(double z_upper, double z_lower, double y) {
+    if (z_upper < z_lower) {
+        auto tmp = z_upper;
+        z_upper = z_lower;
+        z_lower = tmp;
     }
-    exit(0);
+    bool sign = z_upper >= 0;
+    double limbSum = -1./6. * z_upper * (2 * (limbQuadratic * (3*y*y + z_upper*z_upper - 6) - 3) -3*limbLinear*(-2)) -
+              1./2. * (y*y - 1.) * (limbLinear - 2*limbQuadratic) * sign*M_PI_2;
+
+    sign = z_lower >= 0;
+    limbSum -= -1./6. * z_lower * (2 * (limbQuadratic * (3*y*y + z_lower*z_lower - 6) - 3) -3*limbLinear*(-2)) -
+               1./2. * (y*y - 1.) * (limbLinear - 2*limbQuadratic) * sign*M_PI_2;
+
+    return limbSum;
 }
