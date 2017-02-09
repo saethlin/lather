@@ -15,8 +15,8 @@ Spot::Spot(Star star, double latitude, double longitude, double fillfactor, bool
     this->longitude = longitude;
 
     //Compute initial location
-    std::vector<point> centeredCoordinates(spotResolution);
-    initialCoordinates = std::vector<point>(spotResolution);
+    std::vector<Point> centeredCoordinates(spotResolution);
+    initialCoordinates = std::vector<Point>(spotResolution);
 
 
     for (auto i = 0; i < initialCoordinates.size(); i++) {
@@ -123,6 +123,8 @@ bool Spot::isVisible(double phase) {
             }
         }
     }
+
+     std::cout << maxz << " " << minz << " " << maxy << " " << miny << std::endl;
 
     // Indices of miny, minz,... on the grid
     double gridStep = 2./star.gridSize;
@@ -254,42 +256,58 @@ void Spot::scan(double phase, double& flux, std::vector<double>& profile, double
     }
 }
 
-
-struct Extent {
-    double min, max;
-    Extent clamp(double val) const {
-        return Extent(clamp(-val, min, val), clamp(-val, max, val));
-    }
-};
-
-
+// Uses math conventions, x is depth, y is horizontal, z is vertical
 bool Spot::isVisible2(double phase) {
-    double opening_angle = 0.1; //TODO this should be private member data
+    double opening_angle = acos(sqrt(1-size*size));
 
     // Location in spherical coordinates
     double theta = phase + longitude;
-    double phi = latitude;
+    double phi = latitude + M_PI_2;
 
     // Convert to cartesian
-    auto center = Point(sin(theta)*cos(phi),
-                        sin(theta)*sin(phi),
-                        cos(theta));
+    auto center = Point(sin(phi)*cos(theta),
+                        sin(phi)*sin(theta),
+                        cos(phi));
 
     // Apply inclination
     center = center.rotate_y(star.inclination);
 
-    double z_extent = sqrt(1-center.y*center.y);
-    double y_extent = sqrt(1-center.z*center.z);
+    //std::cout << theta << " " << phi << std::endl;
+    //std::cout << phase << " " << center.x << " " << center.y << " " << center.z << std::endl;
+
+    //double z_bound = sqrt(1-center.y*center.y);
+    //double y_bound = sqrt(1-center.z*center.z);
 
     // Compute bounds by doing further rotations
-    double zmin = center.rotate_y(-opening_angle).z;
-    zmin = clamp(-z_extent, zmin, z_extent);
-    double zmax = center.rotate_y(opening_angle).z;c
-    zmax = clamp(-z_extent, zmax, z_extent);
-    double ymin = center.rotate_z(-opening_angle).y;
-    zmax = clamp(-y_extent, ymin, y_extent);
-    double ymax = center.rotate_z(opening_angle).y;
-    ymax = clamp(-y_extent, ymax, y_extent);
+    //double zmin = center.rotate_y(-opening_angle).z;
+    //double zmax = center.rotate_y(opening_angle).z;
+    //double ymin = center.rotate_z(-opening_angle).y;
+    //double ymax = center.rotate_z(opening_angle).y;
+
+    double top = Point(sin(phi-opening_angle)*cos(theta),
+                       sin(phi-opening_angle)*sin(theta),
+                       cos(phi-opening_angle)).z;
+
+    double bottom = Point(sin(phi+opening_angle)*cos(theta),
+                          sin(phi+opening_angle)*sin(theta),
+                          cos(phi+opening_angle)).z;
+
+
+    double right = Point(sin(phi)*cos(theta+opening_angle),
+                        sin(phi)*sin(theta+opening_angle),
+                        cos(phi)).y;
+
+    double left = Point(sin(phi)*cos(theta-opening_angle),
+                         sin(phi)*sin(theta-opening_angle),
+                         cos(phi)).y;
+
+    //zmin = clamp(-z_bound, zmin, z_bound);
+    //zmax = clamp(-z_bound, zmax, z_bound);
+    //zmax = clamp(-y_bound, ymin, y_bound);
+    //ymax = clamp(-y_bound, ymax, y_bound);
+
+    //std::cout << phase << " " << top << " " << bottom << std::endl;
+    std::cout << top << " " << bottom << " " << right << " " << left << std::endl;
 
     bool visible = center.x > -sqrt(2*size);
     return visible;

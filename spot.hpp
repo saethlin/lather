@@ -6,38 +6,37 @@
 #include "profile.hpp"
 
 
-
 class Point {
 public:
+    Point() {};
     Point(double x, double y, double z) :
             x(x), y(y), z(z) {}
 
     Point rotate_x(double angle) {
-        double new_y = y*cos(angle) + z*sin(angle);
+        double new_y = y*cos(angle) - z*sin(angle);
         double new_z = y*sin(angle) + z*cos(angle);
         return Point(x, new_y, new_z);
     }
 
     Point rotate_y(double angle) {
-        double new_z = z*cos(angle) + x*sin(angle);
+        double new_z = z*cos(angle) - x*sin(angle);
         double new_x = z*sin(angle) + x*cos(angle);
         return Point(new_x, y, new_z);
     }
 
     Point rotate_z(double angle) {
-        double new_x = x*cos(angle) + y*sin(angle);
+        double new_x = x*cos(angle) - y*sin(angle);
         double new_y = x*sin(angle) + y*cos(angle);
         return Point(new_x, new_y, z);
     }
 
-    double x, y, z;
+    double x=0, y=0, z=0;
 };
 
 
 inline double clamp(double lower, double num, double upper) {
     return num <= lower ? lower : num >= upper ? upper : num;
 }
-
 
 
 class Spot {
@@ -54,7 +53,7 @@ private:
     double size;
     bool plage;
     double matrixSpot[3][3];
-    std::vector<point> initialCoordinates;
+    std::vector<Point> initialCoordinates;
     int iminy, imaxy, iminz, imaxz;
 };
 #endif

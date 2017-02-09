@@ -81,6 +81,9 @@ void Simulation::observe(std::vector<double>& time, std::vector<double>& flux, s
         double spotFlux = 0.0;
 
         for (auto s = 0; s < spots.size(); s++) {
+            spots[s].isVisible2(phase);
+            spots[s].isVisible(phase);
+            continue;
             if (spots[s].isVisible(phase)) {
                 anyVisible = true;
                 spots[s].scan(phase, spotFlux, spotProfile, wavelength, observeRV);
