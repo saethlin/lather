@@ -28,7 +28,7 @@ class Star {
         double temperature, spotTempDiff;
         double limbLinear, limbQuadratic;
         double intensity;
-        size_t gridSize;
+        double grid_interval;
         Profile profileQuiet;
         Profile profileActive;
         double fluxQuiet = 0;

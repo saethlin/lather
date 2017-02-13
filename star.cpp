@@ -27,13 +27,12 @@ Star::Star(double radius, double period, double inclination, double temperature,
     this -> spotTempDiff = spotTempDiff;
     this -> limbLinear = limbLinear;
     this -> limbQuadratic = limbQuadratic;
-    this -> gridSize = gridSize;
-    analytic = false;
+    this -> grid_interval = 2.0/gridSize;
 
     // This is a significant optimization for the purely numerical mode
     std::vector<double> grid_steps(gridSize+1);
     for (auto i = 0; i <= gridSize; i++) {
-        grid_steps[i] = -1.0 + i * 2.0 / gridSize;
+        grid_steps[i] = -1.0 + i * grid_interval;
     }
 
     // Setup for profiles
@@ -91,22 +90,12 @@ Star::Star(double radius, double period, double inclination, double temperature,
             auto& ccfShifted = profileQuiet.shift(v_shift);
 
             double limbSum = 0;
+            for (const auto &z : grid_steps) {
+                auto rSquared = y * y + z * z;
 
-            if (analytic) {
-                auto z_bound = sqrt(1 - y * y);
-                if (z_bound != 0) {
-                    limbSum = limb_integral(z_bound, -z_bound, y);
-                }
-            }
-
-            else {
-                for (const auto &z : grid_steps) {
-                    auto rSquared = y * y + z * z;
-
-                    if (rSquared <= 1) {
-                        auto r_cos = sqrt(1 - rSquared);
-                        limbSum += (1 - limbLinear * (1. - r_cos) - limbQuadratic * (1 - r_cos) * (1 - r_cos));
-                    }
+                if (rSquared <= 1) {
+                    auto r_cos = sqrt(1 - rSquared);
+                    limbSum += (1 - limbLinear * (1. - r_cos) - limbQuadratic * (1 - r_cos) * (1 - r_cos));
                 }
             }
 
