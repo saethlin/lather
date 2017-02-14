@@ -61,7 +61,7 @@ void Simulation::addSpot(double latitude, double longitude, double fillfactor, b
 
 
 void Simulation::clear_spots() {
-    this->spots.clear();
+    spots.clear();
 }
 
 
@@ -70,7 +70,7 @@ std::vector<double> Simulation::observe_rv(std::vector<double>& time, double wav
     std::vector<double> rv(time.size());
 
     star.intensity = planck(wavelength, star.temperature);
-    for (auto& spot : spots) {
+    for (auto &spot : spots) {
         spot.intensity = planck(wavelength, spot.temperature) / star.intensity;
     }
 
@@ -79,14 +79,13 @@ std::vector<double> Simulation::observe_rv(std::vector<double>& time, double wav
     std::vector<double> fit_result = star.fit_result;
 
     for (auto t = 0; t < time.size(); t++) {
-        auto phase = fmod(time[t], star.period)/star.period * 2*pi;
-        for (auto& spot : spots) {
+        auto phase = fmod(time[t], star.period) / star.period * 2 * pi;
+        for (auto &spot : spots) {
             auto profile = spot.get_ccf(phase, wavelength);
             for (auto i = 0; i < profile.size(); i++) {
                 spot_profile[i] += profile[i];
             }
         }
-
         // Compute the observed profile and fit the rv: the star's quiet profile minus the spot flux
         for (auto i = 0; i < spot_profile.size(); i++) {
             spot_profile[i] = star.integrated_ccf[i] - spot_profile[i];
@@ -95,7 +94,7 @@ std::vector<double> Simulation::observe_rv(std::vector<double>& time, double wav
         fit_rv(star.profileQuiet.rv(), spot_profile, fit_result);
         rv[t] = fit_result[1] - star.zero_rv;
 
-        for (auto& elem : spot_profile) elem = 0.0;
+        for (auto &elem : spot_profile) elem = 0.0;
     }
     return rv;
 }
