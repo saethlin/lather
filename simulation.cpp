@@ -65,56 +65,62 @@ void Simulation::clear_spots() {
 }
 
 
-void Simulation::observe(std::vector<double>& time, std::vector<double>& flux, std::vector<double>& rv, double wavelength, bool observeRV) {
+
+std::vector<double> Simulation::observe_rv(std::vector<double>& time, double wavelength) {
+    std::vector<double> rv(time.size());
+
     star.intensity = planck(wavelength, star.temperature);
     for (auto& spot : spots) {
         spot.intensity = planck(wavelength, spot.temperature) / star.intensity;
     }
 
-    std::vector<double> spotProfile(star.profileQuiet.size());
+
+    std::vector<double> spot_profile(star.profileActive.size());
     std::vector<double> fit_result = star.fit_result;
 
     for (auto t = 0; t < time.size(); t++) {
-
         auto phase = fmod(time[t], star.period)/star.period * 2*pi;
-        bool anyVisible = false;
-        double spotFlux = 0.0;
-
-        for (auto s = 0; s < spots.size(); s++) {
-            spots[s].isVisible2(phase);
-            spots[s].isVisible(phase);
-            continue;
-            if (spots[s].isVisible(phase)) {
-                anyVisible = true;
-                spots[s].scan(phase, spotFlux, spotProfile, wavelength, observeRV);
+        for (auto& spot : spots) {
+            auto profile = spot.get_ccf(phase, wavelength);
+            for (auto i = 0; i < profile.size(); i++) {
+                spot_profile[i] += profile[i];
             }
         }
 
-        if (anyVisible) {
-            flux[t] = (star.fluxQuiet - spotFlux) / star.fluxQuiet;
-            spotFlux = 0.0;
-
-            if (observeRV) {
-                // Compute the observed profile and fit the rv: the star's quiet profile minus the spot flux
-                for (auto i = 0; i < spotProfile.size(); i++) {
-                    spotProfile[i] = star.integrated_ccf[i] - spotProfile[i];
-                }
-                normalize(spotProfile);
-                fit_rv(star.profileQuiet.rv(), spotProfile, fit_result);
-                rv[t] = fit_result[1] - star.zero_rv;
-
-                for (auto& elem : spotProfile) {
-                    elem = 0.0;
-                }
-            }
+        // Compute the observed profile and fit the rv: the star's quiet profile minus the spot flux
+        for (auto i = 0; i < spot_profile.size(); i++) {
+            spot_profile[i] = star.integrated_ccf[i] - spot_profile[i];
         }
-        else {
-            rv[t] = 0.0;
-            flux[t] = 1.0;
+        normalize(spot_profile);
+        fit_rv(star.profileQuiet.rv(), spot_profile, fit_result);
+        rv[t] = fit_result[1] - star.zero_rv;
+
+        for (auto& elem : spot_profile) elem = 0.0;
+    }
+    return rv;
+}
+
+
+std::vector<double> Simulation::observe_flux(std::vector<double>& time, double wavelength) {
+    std::vector<double> flux(time.size());
+    star.intensity = planck(wavelength, star.temperature);
+
+    for (auto& spot : spots) {
+        spot.intensity = planck(wavelength, spot.temperature) / star.intensity;
+    }
+
+    for (auto t = 0; t < time.size(); t++) {
+        auto phase = fmod(time[t], star.period)/star.period * 2*pi;
+        double spot_flux = 0.0;
+
+        for (auto& spot : spots) {
+            spot_flux += spot.get_flux(phase, wavelength);
         }
+
+        flux[t] = (star.fluxQuiet - spot_flux) / star.fluxQuiet;
     }
     normalize(flux);
-    exit(0);
+    return flux;
 }
 
 

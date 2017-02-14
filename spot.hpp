@@ -30,6 +30,17 @@ public:
         return Point(new_x, new_y, z);
     }
 
+    Point rotate_axis(double angle, Point axis) {
+        double u = axis.x;
+        double v = axis.y;
+        double w = axis.z;
+
+        double new_x = u*(u*x + v*y + w*z)*(1-cos(angle)) + x*cos(angle) + (-w*y + v*z)*sin(angle);
+        double new_y = v*(u*x + v*y + w*z)*(1-cos(angle)) + y*cos(angle) + (w*x - u*z)*sin(angle);
+        double new_z = w*(u*x + v*y + w*z)*(1-cos(angle)) + z*cos(angle) + (-v*x + u*y)*sin(angle);
+        return Point(new_x, new_y, new_z);
+    }
+
     double x=0, y=0, z=0;
 };
 
@@ -39,21 +50,33 @@ inline double clamp(double lower, double num, double upper) {
 }
 
 
+struct spot_bounds {
+    bool visible;
+    double miny, maxy, minz, maxz;
+};
+
+
 class Spot {
 public:
     Spot(Star star, double latitude, double longitude, double fillfactor, bool plage, size_t spotResolution);
-    bool isVisible(double phase);
+    spot_bounds get_bounds_at(double phase);
     bool isVisible2(double phase);
-    void scan(double phase, double& flux, std::vector<double>& profile, double wavelength, bool observeRV);
+    bool is_on_spot(double x, double y, double z);
+    std::vector<double> get_ccf(double phase, double wavelength);
+    double get_flux(double phase, double wavelength);
     double intensity, temperature;
 
 private:
-    double latitude, longitude;
     Star star;
+    double opening_angle, radius;
+    double radius_squared;
+    double latitude, longitude;
     double size;
     bool plage;
     double matrixSpot[3][3];
     std::vector<Point> initialCoordinates;
     int iminy, imaxy, iminz, imaxz;
+    double miny, maxy, minz, maxz;
+    Point center;
 };
 #endif

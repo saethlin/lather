@@ -27,14 +27,7 @@ Star::Star(double radius, double period, double inclination, double temperature,
     this -> spotTempDiff = spotTempDiff;
     this -> limbLinear = limbLinear;
     this -> limbQuadratic = limbQuadratic;
-    this -> gridSize = gridSize;
-    analytic = false;
-
-    // This is a significant optimization for the purely numerical mode
-    std::vector<double> grid_steps(gridSize+1);
-    for (auto i = 0; i <= gridSize; i++) {
-        grid_steps[i] = -1.0 + i * 2.0 / gridSize;
-    }
+    this -> grid_interval = 2.0/gridSize;
 
     // Setup for profiles
     std::vector<double> rv;
@@ -86,28 +79,15 @@ Star::Star(double radius, double period, double inclination, double temperature,
     else {
         integrated_ccf = std::vector<double>(profileQuiet.size());
 
-        for (const auto& y : grid_steps) {
+        for (auto y = -1; y <= 1; y += grid_interval) {
             auto v_shift = y * vrot * sin(this->inclination);
             auto& ccfShifted = profileQuiet.shift(v_shift);
 
             double limbSum = 0;
-
-            if (analytic) {
-                auto z_bound = sqrt(1 - y * y);
-                if (z_bound != 0) {
-                    limbSum = limb_integral(z_bound, -z_bound, y);
-                }
-            }
-
-            else {
-                for (const auto &z : grid_steps) {
-                    auto rSquared = y * y + z * z;
-
-                    if (rSquared <= 1) {
-                        auto r_cos = sqrt(1 - rSquared);
-                        limbSum += (1 - limbLinear * (1. - r_cos) - limbQuadratic * (1 - r_cos) * (1 - r_cos));
-                    }
-                }
+            double z_bound = sqrt(1-y*y);
+            for (auto z = -z_bound; z <= z_bound; z+= grid_interval) {
+                double x = sqrt(1 - y*y - z*z);
+                limbSum += limb_brightness(x, y, z);
             }
 
             //std::cout << limbSum << '\n';
@@ -126,7 +106,6 @@ Star::Star(double radius, double period, double inclination, double temperature,
             cachewrite << num << '\n';
         }
         cachewrite.close();
-
     }
 
     // Compute the rv that will be fitted with no spots visible.
@@ -162,4 +141,9 @@ double Star::limb_integral(double z_upper, double z_lower, double y) {
                1./2. * (y*y - 1.) * (limbLinear - 2*limbQuadratic) * sign*M_PI_2;
 
     return limbSum;
+}
+
+double Star::limb_brightness(double x, double y, double z) {
+    auto r_cos = x;
+    return 1 - limbLinear * (1 - r_cos) - limbQuadratic * (1 - r_cos) * (1 - r_cos);
 }

@@ -21,6 +21,7 @@ class Star {
         Star(double radius, double period, double inclination, double temperature, double spotTempDiff,
                         double limbLinear, double limbQuadratic, size_t gridSize);
         double limb_integral(double, double, double);
+        double limb_brightness(double x, double y, double z);
 
         double vrot;
         double period;
@@ -28,7 +29,7 @@ class Star {
         double temperature, spotTempDiff;
         double limbLinear, limbQuadratic;
         double intensity;
-        size_t gridSize;
+        double grid_interval;
         Profile profileQuiet;
         Profile profileActive;
         double fluxQuiet = 0;

@@ -4,21 +4,20 @@
 
 int main() {
     clock_t begin = clock();
+
     Simulation simulation("/home/ben/lather/config.cfg");
-    size_t npoints = 25;
-    std::vector<double> time(npoints);
-    for (auto i = 0; i < time.size(); i++) {
-        time[i] = (double)i/time.size()*25.05;
-    }
-    std::vector<double> flux(npoints);
-    std::vector<double> rv(npoints);
-    simulation.observe(time, flux, rv, 5000e-10, true);
+    std::vector<double> time(25);
+    std::iota(time.begin(), time.end(), 0);
+
+    auto rv = simulation.observe_rv(time, 5000e-10);
+    //auto flux = simulation.observe_flux(time, 5000e-10);
+
     clock_t end = clock();
     double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-    std::cout << elapsed_secs << std::endl;
+    std::cout << "Run took: " << elapsed_secs << std::endl;
 
     for (const auto& val : rv) {
-        std::cout << val << std::endl;
+        std::cout << val << '\n';
     }
 
     return 0;

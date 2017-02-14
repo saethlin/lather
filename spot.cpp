@@ -13,6 +13,11 @@ Spot::Spot(Star star, double latitude, double longitude, double fillfactor, bool
     this -> temperature = star.temperature - star.spotTempDiff;
     this->latitude = latitude;
     this->longitude = longitude;
+    opening_angle = acos(sqrt(1-size*size));
+    double height = 1-sqrt(1-size*size);
+    radius = 2*height*(height-1);
+    auto h = 1-sqrt(1-size*size);
+    radius_squared = 2*h - h*h + h*h;
 
     //Compute initial location
     std::vector<Point> centeredCoordinates(spotResolution);
@@ -56,12 +61,10 @@ Spot::Spot(Star star, double latitude, double longitude, double fillfactor, bool
         initialCoordinates[i].y = matrixInit[1][0]*centeredCoordinates[i].x + matrixInit[1][1]*centeredCoordinates[i].y + matrixInit[1][2]*centeredCoordinates[i].z;
         initialCoordinates[i].z = matrixInit[2][0]*centeredCoordinates[i].x + matrixInit[2][1]*centeredCoordinates[i].y + matrixInit[2][2]*centeredCoordinates[i].z;
     }
-
-
 }
 
 
-bool Spot::isVisible(double phase) {
+spot_bounds Spot::get_bounds_at(double phase) {
 
     double axis[3] = {cos(star.inclination), 0, sin(star.inclination)};
     double rotation[3][3] = {{(1 - cos(phase)) * axis[0] * axis[0] + cos(phase),
@@ -76,10 +79,10 @@ bool Spot::isVisible(double phase) {
 
     double newx, newy, newz;
     int countOn = 0, countOff = 0;
-    double miny = 1;
-    double maxy = -1;
-    double minz = 1;
-    double maxz = -1;
+    miny = 1;
+    maxy = -1;
+    minz = 1;
+    maxz = -1;
 
     // Search for bounds by applying the rotation matrix to the initial coordinates
     // x coordinate is depth, so proceed only if the spot is on the front of the star
@@ -124,145 +127,101 @@ bool Spot::isVisible(double phase) {
         }
     }
 
-     std::cout << maxz << " " << minz << " " << maxy << " " << miny << std::endl;
+    //std::cout << minz << " " << maxz << " " << miny << " " << maxy << std::endl;
 
-    // Indices of miny, minz,... on the grid
-    double gridStep = 2./star.gridSize;
+    miny = floor(miny/star.grid_interval)*star.grid_interval;
+    maxy = ceil(maxy/star.grid_interval)*star.grid_interval;
+    minz = floor(minz/star.grid_interval)*star.grid_interval;
+    maxz = ceil(maxz/star.grid_interval)*star.grid_interval;
+
+
+    // Indices of miny, minz,... on the grid, eventually comment this out
+    double gridStep = star.grid_interval;
     iminy = (int)floor((1.+miny)/gridStep);
     iminz = (int)floor((1.+minz)/gridStep);
     imaxy = (int)ceil((1.+maxy)/gridStep);
     imaxz = (int)ceil((1.+maxz)/gridStep);
 
-    return (countOn > 0);
+    //return (countOn > 0);
+
+    double theta = phase + longitude;
+    double phi = M_PI_2 - latitude;
+    center = Point(sin(phi)*cos(theta),
+                   sin(phi)*sin(theta),
+                   cos(phi));
+    center = center.rotate_y(star.inclination - M_PI_2);
+
+    //std::cout << center.x << " " << center.y << " " << center.z << std::endl;
+
+    return {countOn > 0, miny, maxy, minz, maxz};
 }
 
 
-void Spot::scan(double phase, double& flux, std::vector<double>& profile, double wavelength, bool observeRV) {
-    std::vector<double> ccfShifted;
-    std::vector<double> ccfActiveShifted;
-
-    double inclination = star.inclination;
-    // matrix R from spot_inverse_rotation
-    auto inv_phase = phase - 2*pi;
-    double matrixPhase[3][3] = {{(1 - cos(inv_phase)) * cos(inclination) * cos(inclination) + cos(inv_phase), sin(inv_phase) * sin(inclination), (1 - cos(inv_phase)) * cos(inclination) * sin(inclination)},
-                                {-sin(inv_phase) * sin(inclination), cos(inv_phase), sin(inv_phase) * cos(inclination)},
-                                {(1 - cos(inv_phase)) * sin(inclination) * cos(inclination), -sin(inv_phase) * cos(inclination), (1 - cos(inv_phase)) * sin(inclination) * sin(inclination) + cos(inv_phase)}};
-
-    /*
-    double rotate_to_center[3][3];
-    for (int r = 0; r < 3; r++) {
-        for (int c = 0; c < 3; c++) {
-            rotate_to_center[r][c] = 0.;
-            for (int k = 0; k < 3; k++) {
-                rotate_to_center[r][c] += matrixPhase[r][k] * matrixSpot[k][c];
-            }
-        }
+std::vector<double> Spot::get_ccf(double phase, double wavelength) {
+    std::vector<double> profile(star.profileActive.size());
+    auto bounds = get_bounds_at(phase);
+    if (not bounds.visible) {
+        return profile;
     }
-    */
 
-    // TODO Why doesn't the above code do the same thing
-    double rotate_to_center[3][3] = {{matrixSpot[0][0]*matrixPhase[0][0]+matrixSpot[0][1]*matrixPhase[1][0]+matrixSpot[0][2]*matrixPhase[2][0],
-                                   matrixSpot[0][0]*matrixPhase[0][1]+matrixSpot[0][1]*matrixPhase[1][1]+matrixSpot[0][2]*matrixPhase[2][1],
-                                   matrixSpot[0][0]*matrixPhase[0][2]+matrixSpot[0][1]*matrixPhase[1][2]+matrixSpot[0][2]*matrixPhase[2][2]},
-                                  {matrixSpot[1][0]*matrixPhase[0][0]+matrixSpot[1][1]*matrixPhase[1][0]+matrixSpot[1][2]*matrixPhase[2][0],
-                                   matrixSpot[1][0]*matrixPhase[0][1]+matrixSpot[1][1]*matrixPhase[1][1]+matrixSpot[1][2]*matrixPhase[2][1],
-                                   matrixSpot[1][0]*matrixPhase[0][2]+matrixSpot[1][1]*matrixPhase[1][2]+matrixSpot[1][2]*matrixPhase[2][2]},
-                                  {matrixSpot[2][0]*matrixPhase[0][0]+matrixSpot[2][1]*matrixPhase[1][0]+matrixSpot[2][2]*matrixPhase[2][0],
-                                   matrixSpot[2][0]*matrixPhase[0][1]+matrixSpot[2][1]*matrixPhase[1][1]+matrixSpot[2][2]*matrixPhase[2][1],
-                                   matrixSpot[2][0]*matrixPhase[0][2]+matrixSpot[2][1]*matrixPhase[1][2]+matrixSpot[2][2]*matrixPhase[2][2]}};
+    for (auto y = miny; y < maxy; y += star.grid_interval) {
 
-    for (auto iy = iminy; iy < imaxy; iy++) {
-        auto y = -1.0+iy*2.0/star.gridSize;
-
-        if (observeRV) {
-            auto v_shift = y * star.vrot * sin(star.inclination);
-            ccfShifted = star.profileQuiet.shift(v_shift);
-            ccfActiveShifted = star.profileActive.shift(v_shift);
-        }
+        auto v_shift = y * star.vrot * sin(star.inclination);
+        auto& ccfShifted = star.profileQuiet.shift(v_shift);
+        auto& ccfActiveShifted = star.profileActive.shift(v_shift);
 
         double limbSum = 0;
 
-        if (star.analytic) {
-            // Find the z extent of the spot
-            auto z_upper = -1.0 + iminz * 2.0 / star.gridSize;
-            auto z_lower = -1.0 * imaxz * 2.0 / star.gridSize;
-
-            auto xsquared = y * y + z_upper * z_upper;
-            auto depth = rotate_to_center[0][0] * sqrt(1 - xsquared) + rotate_to_center[0][1] * y +
-                         rotate_to_center[0][2] * z_upper;
-            bool on_star = xsquared <= 1;
-            bool on_spot = depth * depth <= (1 - size * size);
-
-            while ((not on_star) or (not on_spot)) {
-                z_upper -= 2.0 / star.gridSize;
-                xsquared = y * y + z_upper * z_upper;
-                depth = rotate_to_center[0][0] * sqrt(1 - xsquared) + rotate_to_center[0][1] * y +
-                        rotate_to_center[0][2] * z_upper;
-                on_star = xsquared <= 1;
-                on_spot = depth * depth <= (1 - size * size);
-            }
-
-            xsquared = y * y + z_lower * z_lower;
-            depth = rotate_to_center[0][0] * sqrt(1 - xsquared) + rotate_to_center[0][1] * y +
-                    rotate_to_center[0][2] * z_lower;
-            on_star = xsquared <= 1;
-            on_spot = depth * depth <= (1 - size * size);
-
-            while ((not on_star) or (not on_spot)) {
-                z_lower += 2.0 / star.gridSize;
-                xsquared = y * y + z_lower * z_lower;
-                depth = rotate_to_center[0][0] * sqrt(1 - xsquared) + rotate_to_center[0][1] * y +
-                        rotate_to_center[0][2] * z_lower;
-                on_star = xsquared <= 1;
-                on_spot = depth * depth <= (1 - size * size);
-            }
-
-            limbSum = star.limb_integral(z_upper, z_lower, y);
-        }
-        else {
-
-            double intensitySum = 0.0;
-
-            for (auto iz = iminz; iz < imaxz; iz++) {
-                auto z = -1.0 + iz * 2.0 / star.gridSize;
-                auto xsquared = y * y + z * z;
-                if (xsquared < 1.) { // If on the disk
-
-                    // Rotate spot to the center of the star and check the x-coordinate, depth.
-                    // This is a nifty way to check if the coordinate is on the spot
-                    auto depth = rotate_to_center[0][0] * sqrt(1 - xsquared) + rotate_to_center[0][1] * y +
-                                 rotate_to_center[0][2] * z;
-
-                    if (depth * depth >= (1 - size * size)) { // If actually on the spot
-                        auto rSquared = (y * y + z * z);
-
-                        auto r_cos = sqrt(1. - rSquared);
-                        // TODO Fix this case, no wonder plages don't work
-                        if (plage) {
-                            auto spot_temp = star.temperature + 250.9 - 407.7 * r_cos + 190.9 * r_cos * r_cos;
-                            intensitySum += planck(wavelength, spot_temp) / star.intensity;
-                        }
-                        limbSum += 1 - star.limbLinear * (1 - r_cos) - star.limbQuadratic * (1 - r_cos) * (1 - r_cos);
-                    }
-                }
+        for (auto z = minz; z < maxz; z += star.grid_interval) {
+            auto x = sqrt(1 - z*z - y*y);
+            if (is_on_spot(x, y, z)) {
+                limbSum += star.limb_brightness(x, y, z);
             }
         }
 
         for (auto i = 0; i < ccfShifted.size(); i++) {
             profile[i] += (ccfShifted[i] - intensity * ccfActiveShifted[i]) * limbSum;
         }
+    }
+    return profile;
+}
 
-        flux += (1-intensity) * limbSum;
+
+double Spot::get_flux(double phase, double wavelength) {
+    auto bounds = get_bounds_at(phase);
+    if (not bounds.visible) {
+        return 0.0;
+    }
+
+    double limb_integral = 0.0;
+    for (auto y = bounds.miny; y < bounds.maxy; y += star.grid_interval) {
+        for (auto z = bounds.minz; z < bounds.maxz; z += star.grid_interval) {
+            auto x = sqrt(1 - y*y - z*z);
+            if (is_on_spot(x, y, z)) {
+                limb_integral += star.limb_brightness(x, y, z);
+            }
+        }
+    }
+    auto intensity = planck(wavelength, temperature) / star.intensity;
+    return (1-intensity)*limb_integral;
+}
+
+
+bool Spot::is_on_spot(double x, double y, double z) {
+    if ((y*y + z*z) >= 1.0) { // Check if on the star disk
+        return false;
+    }
+    else {
+        double distance_squared = (x-center.x)*(x-center.x) + (y-center.y)*(y-center.y) + (z-center.z)*(z-center.z);
+        return distance_squared < radius_squared;
     }
 }
 
-// Uses math conventions, x is depth, y is horizontal, z is vertical
-bool Spot::isVisible2(double phase) {
-    double opening_angle = acos(sqrt(1-size*size));
 
+bool Spot::isVisible2(double phase) {
     // Location in spherical coordinates
     double theta = phase + longitude;
-    double phi = latitude + M_PI_2;
+    double phi = M_PI_2 - latitude;
 
     // Convert to cartesian
     auto center = Point(sin(phi)*cos(theta),
@@ -270,44 +229,15 @@ bool Spot::isVisible2(double phase) {
                         cos(phi));
 
     // Apply inclination
-    center = center.rotate_y(star.inclination);
+    center = center.rotate_y(star.inclination - M_PI_2);
 
-    //std::cout << theta << " " << phi << std::endl;
-    //std::cout << phase << " " << center.x << " " << center.y << " " << center.z << std::endl;
-
-    //double z_bound = sqrt(1-center.y*center.y);
-    //double y_bound = sqrt(1-center.z*center.z);
-
-    // Compute bounds by doing further rotations
-    //double zmin = center.rotate_y(-opening_angle).z;
-    //double zmax = center.rotate_y(opening_angle).z;
-    //double ymin = center.rotate_z(-opening_angle).y;
-    //double ymax = center.rotate_z(opening_angle).y;
-
-    double top = Point(sin(phi-opening_angle)*cos(theta),
-                       sin(phi-opening_angle)*sin(theta),
-                       cos(phi-opening_angle)).z;
+    Point top_point = Point(sin(phi-opening_angle)*cos(theta),
+                            sin(phi-opening_angle)*sin(theta),
+                            cos(phi-opening_angle));
 
     double bottom = Point(sin(phi+opening_angle)*cos(theta),
                           sin(phi+opening_angle)*sin(theta),
                           cos(phi+opening_angle)).z;
-
-
-    double right = Point(sin(phi)*cos(theta+opening_angle),
-                        sin(phi)*sin(theta+opening_angle),
-                        cos(phi)).y;
-
-    double left = Point(sin(phi)*cos(theta-opening_angle),
-                         sin(phi)*sin(theta-opening_angle),
-                         cos(phi)).y;
-
-    //zmin = clamp(-z_bound, zmin, z_bound);
-    //zmax = clamp(-z_bound, zmax, z_bound);
-    //zmax = clamp(-y_bound, ymin, y_bound);
-    //ymax = clamp(-y_bound, ymax, y_bound);
-
-    //std::cout << phase << " " << top << " " << bottom << std::endl;
-    std::cout << top << " " << bottom << " " << right << " " << left << std::endl;
 
     bool visible = center.x > -sqrt(2*size);
     return visible;
