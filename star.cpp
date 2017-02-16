@@ -75,18 +75,16 @@ Star::Star(double radius, double period, double inclination, double temperature,
     else {
         integrated_ccf = std::vector<double>(profileQuiet.size());
 
-        for (auto y = -1.0; y <= 1; y += grid_interval) {
-            std::cout << y << std::endl;
+        for (double y = -1.0; y <= 1; y += grid_interval) {
             auto& ccfShifted = quiet_profile(y);
 
             double limb_integral = 0.0;
             double z_bound = sqrt(1-y*y);
+
             for (auto z = -z_bound; z <= z_bound; z+= grid_interval) {
-                double x = sqrt(1 - y*y - z*z);
+                double x = sqrt(1 - std::min(y*y + z*z, 1.0));
                 limb_integral += limb_brightness(x);
             }
-
-            //std::cout << limb_integral << '\n';
 
             for (auto k = 0; k < profileQuiet.size(); k++) {
                 integrated_ccf[k] += ccfShifted[k] * limb_integral;
@@ -114,7 +112,7 @@ Star::Star(double radius, double period, double inclination, double temperature,
     fit_result[2] = 2.71; // TODO Remove this magic number
     fit_result[3] = normProfile[0];
 
-    fit_rv(profileQuiet.rv(), normProfile, fit_result);
+    fit_result = fit_rv(profileQuiet.rv(), normProfile, fit_result);
     zero_rv = fit_result[1];
 
     //for (const auto& val : normProfile) std::cout << val << '\n';

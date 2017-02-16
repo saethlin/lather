@@ -72,7 +72,7 @@ std::vector<double> Simulation::observe_rv(std::vector<double>& time, double wav
     }
 
     std::vector<double> spot_profile(star.profileActive.size());
-    std::vector<double> fit_result = star.fit_result;
+    auto fit_guess = star.fit_result;
 
     for (auto t = 0; t < time.size(); t++) {
         auto phase = fmod(time[t], star.period) / star.period * 2 * pi;
@@ -87,7 +87,7 @@ std::vector<double> Simulation::observe_rv(std::vector<double>& time, double wav
             spot_profile[i] = star.integrated_ccf[i] - spot_profile[i];
         }
         normalize(spot_profile);
-        fit_rv(star.profileQuiet.rv(), spot_profile, fit_result);
+        auto fit_result = fit_rv(star.profileQuiet.rv(), spot_profile, fit_guess);
         rv[t] = fit_result[1] - star.zero_rv;
 
         for (auto &elem : spot_profile) elem = 0.0;

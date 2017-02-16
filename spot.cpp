@@ -72,7 +72,7 @@ std::vector<double> Spot::get_ccf(double phase, double wavelength) {
         double limb_integral = 0.0;
 
         for (double z = bounds.minz; z < bounds.maxz; z += star->grid_interval) {
-            auto x = sqrt(1 - z*z - y*y);
+            auto x = sqrt(1 - (z*z + y*y));
             if (is_on_spot(x, y, z)) {
                 limb_integral += star->limb_brightness(x);
             }
@@ -82,6 +82,7 @@ std::vector<double> Spot::get_ccf(double phase, double wavelength) {
             profile[i] += (ccfShifted[i] - intensity * ccfActiveShifted[i]) * limb_integral;
         }
     }
+
     return profile;
 }
 
@@ -95,7 +96,7 @@ double Spot::get_flux(double phase, double wavelength) {
     double limb_integral = 0.0;
     for (auto y = bounds.miny; y < bounds.maxy; y += star->grid_interval) {
         for (auto z = bounds.minz; z < bounds.maxz; z += star->grid_interval) {
-            auto x = sqrt(1 - y*y - z*z);
+            auto x = sqrt(1 - (y*y + z*z));
             if (is_on_spot(x, y, z)) {
                 limb_integral += star->limb_brightness(x);
             }
