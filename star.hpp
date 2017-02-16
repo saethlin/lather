@@ -16,28 +16,33 @@
 void normalize(std::vector<double>& vec);
 
 class Star {
-    public:
-        Star();
-        Star(double radius, double period, double inclination, double temperature, double spotTempDiff,
-                        double limbLinear, double limbQuadratic, size_t gridSize);
-        double limb_integral(double, double, double);
-        double limb_brightness(double x, double y, double z);
+public:
+    Star();
+    Star(double radius, double period, double inclination, double temperature, double spotTempDiff,
+                    double limbLinear, double limbQuadratic, size_t gridSize);
+    double limb_integral(double, double, const double) const;
+    double limb_brightness(const double r_cos) const;
+    std::vector<double>& active_profile(const double y);
+    std::vector<double>& quiet_profile(const double y);
+    bool load_cache();
+    void save_cache();
 
-        double vrot;
-        double period;
-        double inclination;
-        double temperature, spotTempDiff;
-        double limbLinear, limbQuadratic;
-        double intensity;
-        double grid_interval;
-        Profile profileQuiet;
-        Profile profileActive;
-        double fluxQuiet = 0;
-        std::vector<double> integrated_ccf;
-        std::vector<double> limb;
-        double zero_rv;
-        std::vector<double> fit_result;
-        bool analytic;
+    double inclination;
+    double period;
+    double temperature, spotTempDiff;
+    double limbLinear, limbQuadratic;
+    double intensity;
+    double grid_interval;
+    Profile profileQuiet;
+    Profile profileActive;
+    double fluxQuiet;
+    double zero_rv;
+    std::vector<double> integrated_ccf;
+    std::vector<double> fit_result;
+
+private:
+    double equatorial_velocity;
+
 };
 
 double planck(double wavelength, double temperature);

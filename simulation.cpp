@@ -11,9 +11,8 @@ void normalize(std::vector<double>& vec) {
 }
 
 
-Simulation::Simulation(size_t gridSize, size_t spotResolution) {
+Simulation::Simulation(size_t gridSize) {
     this -> gridSize = gridSize;
-    this -> spotResolution = spotResolution;
 }
 
 
@@ -25,7 +24,6 @@ Simulation::Simulation(const char* filename) {
     }
 
     gridSize = reader.GetInteger("simulation", "grid_resolution", 100);
-    spotResolution = reader.GetInteger("simulation", "spot_resolution", 100);
 
     double radius = reader.GetReal("star", "radius", 1.0);
     double period = reader.GetReal("star", "period", 25.05);
@@ -56,14 +54,13 @@ void Simulation::setStar(double radius, double period, double inclination, doubl
 
 
 void Simulation::addSpot(double latitude, double longitude, double fillfactor, bool plage) {
-    spots.emplace_back(star, latitude, longitude, fillfactor, plage, spotResolution);
+    spots.emplace_back(&star, latitude, longitude, fillfactor, plage);
 }
 
 
 void Simulation::clear_spots() {
     spots.clear();
 }
-
 
 
 std::vector<double> Simulation::observe_rv(std::vector<double>& time, double wavelength) {
@@ -73,7 +70,6 @@ std::vector<double> Simulation::observe_rv(std::vector<double>& time, double wav
     for (auto &spot : spots) {
         spot.intensity = planck(wavelength, spot.temperature) / star.intensity;
     }
-
 
     std::vector<double> spot_profile(star.profileActive.size());
     std::vector<double> fit_result = star.fit_result;
@@ -96,6 +92,7 @@ std::vector<double> Simulation::observe_rv(std::vector<double>& time, double wav
 
         for (auto &elem : spot_profile) elem = 0.0;
     }
+    for (auto& val: rv) val *= 1000;  // Convert to m/s
     return rv;
 }
 

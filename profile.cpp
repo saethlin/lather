@@ -23,7 +23,7 @@ std::vector<double>& Profile::shift(double v_shift) {
     auto& entry = cache[v_shift];
 
     if (!entry) {
-        cache[v_shift] = std::shared_ptr<std::vector<double>> (new std::vector<double>(size()));
+        cache[v_shift] = std::make_shared<std::vector<double> >(size());
         auto& ccf_shifted = *entry;
 
         int quotient = round(v_shift / stepsize);

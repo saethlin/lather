@@ -14,7 +14,7 @@ class Simulation {
 public:
     //Simulation() {}
     Simulation(const char* filename);
-    Simulation(size_t gridSize, size_t spotResolution);
+    Simulation(size_t gridSize);
     void setStar(double radius, double period, double inclination, double temperature, double spot_temp_diff, double linear_limb, double quadratic_limb);
     void addSpot(double latitude, double longitude, double size, bool plage);
     void clear_spots();
@@ -24,7 +24,6 @@ public:
 
 private:
     size_t gridSize;
-    size_t spotResolution;
     Star star;
     std::vector<Spot> spots;
 };

@@ -1,4 +1,4 @@
-//#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 #include <exception>
 #include <stdio.h>
 #include <sstream>
@@ -62,7 +62,6 @@ static PyObject* PySimulation_add_spot(PySimulation* self, PyObject* args, PyObj
         return NULL;
     }
 
-    // Add the spot to the C++ simulation
     self->CppSimulation.addSpot(latitude, longitude, size, plage);
 
     Py_RETURN_NONE;
@@ -75,13 +74,12 @@ static PyObject* PySimulation_clear_spots(PySimulation* self) {
 }
 
 
-static PyObject* PySimulation_observe(PySimulation* self, PyObject *args, PyObject *kwargs) {
+static PyObject* PySimulation_observe_rv(PySimulation* self, PyObject *args, PyObject *kwargs) {
     PyObject* timeArg = NULL;
     double wavelength;
-    bool observeRV;
-    static char* kwdlist[] = {"time", "wavelength", "observe_rv", NULL};
+    static char* kwdlist[] = {"time", "wavelength", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Od|p", kwdlist, &timeArg, &wavelength, &observeRV)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Od", kwdlist, &timeArg, &wavelength)) {
         return NULL;
     }
 
@@ -95,41 +93,25 @@ static PyObject* PySimulation_observe(PySimulation* self, PyObject *args, PyObje
     double* data = (double*)PyArray_DATA(timeArr);
     std::vector<double> time(data, data+dims[0]);
 
-    std::vector<double> flux(time.size());
-    std::vector<double> rv(time.size());
-
-    self->CppSimulation.observe(time, flux, rv, wavelength, observeRV);
+    auto rv = self->CppSimulation.observe_rv(time, wavelength);
 
     // Copy std::vector outputs into a dict of numpy arrays
-    PyObject* output_flux = PyArray_SimpleNew(1, dims, NPY_DOUBLE);
     PyObject* output_rv = PyArray_SimpleNew(1, dims, NPY_DOUBLE);
 
-    double* output_flux_data = (double*)PyArray_DATA(output_flux);
     double* output_rv_data = (double*)PyArray_DATA(output_rv);
     for (int i = 0; i < dims[0]; i++) {
         output_rv_data[i] = rv[i];
-        output_flux_data[i] = flux[i];
     }
-
-    // Build a dictionary to hold the ndarrays
-    PyObject* results = PyDict_New();
-
-    PyObject* flux_key = Py_BuildValue("s", "flux");
-    PyDict_SetItem(results, flux_key, output_flux);
-
-    PyObject* rv_key = Py_BuildValue("s", "rv");
-    PyDict_SetItem(results, rv_key, output_rv);
-
-    return results;
+    return output_rv;
 }
 
-/*
-static PyObject* PySimulation_fit(PySimulation* self, PyObject *args, PyObject* kwargs) {
-    PyObject* timeArg = NULL;
-    PyObject* fluxArg = NULL;
-    static char* kwdlist[] = {"time", "flux", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "OO", kwdlist, &timeArg, &fluxArg)) {
+static PyObject* PySimulation_observe_flux(PySimulation* self, PyObject *args, PyObject *kwargs) {
+    PyObject* timeArg = NULL;
+    double wavelength;
+    static char* kwdlist[] = {"time", "wavelength", NULL};
+
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Od", kwdlist, &timeArg, &wavelength)) {
         return NULL;
     }
 
@@ -138,23 +120,23 @@ static PyObject* PySimulation_fit(PySimulation* self, PyObject *args, PyObject* 
         return NULL;
     }
 
-    PyObject* fluxArr = PyArray_FROM_OTF(fluxArg, NPY_DOUBLE, NPY_IN_ARRAY);
-    if (fluxArr == NULL) {
-        return NULL;
-    }
-
     // Create an std::vector that points to the same data as the input array
     npy_intp* dims = PyArray_DIMS(timeArr);
-    double* timeData = (double*)PyArray_DATA(timeArr);
-    std::vector<double> time(timeData, timeData+dims[0]);
+    double* data = (double*)PyArray_DATA(timeArr);
+    std::vector<double> time(data, data+dims[0]);
 
-    double* fluxData = (double*)PyArray_DATA(fluxArr);
-    std::vector<double> flux(fluxData, fluxData+dims[0]);
+    auto flux = self->CppSimulation.observe_flux(time, wavelength);
 
-    self->CppSimulation.fit(time, flux);
-    Py_RETURN_NONE;
+    // Copy std::vector outputs into a dict of numpy arrays
+    PyObject* output_flux = PyArray_SimpleNew(1, dims, NPY_DOUBLE);
+
+    double* output_flux_data = (double*)PyArray_DATA(output_flux);
+    for (int i = 0; i < dims[0]; i++) {
+        output_flux_data[i] = flux[i];
+    }
+    return output_flux;
 }
-*/
+
 
 /*
 static PyObject* PySimulation_str(PySimulation* self) {
@@ -193,10 +175,10 @@ static PyMethodDef PySimulation_methods[] = {
      "Add a spot to the simulation"},
     {"clear_spots", (PyCFunction)PySimulation_clear_spots, METH_NOARGS,
      "Remove all spots on the simulation"},
-    {"observe", (PyCFunction)PySimulation_observe, METH_KEYWORDS|METH_VARARGS,
+    {"observe_rv", (PyCFunction)PySimulation_observe_rv, METH_KEYWORDS|METH_VARARGS,
      "Compute simulated observations at the given times"},
-    //{"fit", (PyCFunction)PySimulation_fit, METH_KEYWORDS|METH_VARARGS,
-    // "Attempt to fit data with the current simulation"},
+    {"observe_flux", (PyCFunction)PySimulation_observe_flux, METH_KEYWORDS|METH_VARARGS,
+     "Compute simulated observations at the given times"},
     //{"toString", (PyCFunction)PySimulation_str, METH_NOARGS,
     // "Produce a string representation"},
     {NULL}  /* Sentinel */
