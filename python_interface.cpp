@@ -76,10 +76,10 @@ static PyObject* PySimulation_clear_spots(PySimulation* self) {
 
 static PyObject* PySimulation_observe_rv(PySimulation* self, PyObject *args, PyObject *kwargs) {
     PyObject* timeArg = NULL;
-    double wavelength;
-    static char* kwdlist[] = {"time", "wavelength", NULL};
+    double wavelength_min, wavelength_max;
+    static char* kwdlist[] = {"time", "wavelength_min", "wavelength_max", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Od", kwdlist, &timeArg, &wavelength)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Odd", kwdlist, &timeArg, &wavelength_min, &wavelength_max)) {
         return NULL;
     }
 
@@ -93,7 +93,7 @@ static PyObject* PySimulation_observe_rv(PySimulation* self, PyObject *args, PyO
     double* data = (double*)PyArray_DATA(timeArr);
     std::vector<double> time(data, data+dims[0]);
 
-    auto rv = self->CppSimulation.observe_rv(time, wavelength);
+    auto rv = self->CppSimulation.observe_rv(time, wavelength_min, wavelength_max);
 
     // Copy std::vector outputs into a dict of numpy arrays
     PyObject* output_rv = PyArray_SimpleNew(1, dims, NPY_DOUBLE);
@@ -108,10 +108,10 @@ static PyObject* PySimulation_observe_rv(PySimulation* self, PyObject *args, PyO
 
 static PyObject* PySimulation_observe_flux(PySimulation* self, PyObject *args, PyObject *kwargs) {
     PyObject* timeArg = NULL;
-    double wavelength;
-    static char* kwdlist[] = {"time", "wavelength", NULL};
+    double wavelength_min, wavelength_max;
+    static char* kwdlist[] = {"time", "wavelength_min", "wavelength_max", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Od", kwdlist, &timeArg, &wavelength)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Odd", kwdlist, &timeArg, &wavelength_min, &wavelength_max)) {
         return NULL;
     }
 
@@ -125,7 +125,7 @@ static PyObject* PySimulation_observe_flux(PySimulation* self, PyObject *args, P
     double* data = (double*)PyArray_DATA(timeArr);
     std::vector<double> time(data, data+dims[0]);
 
-    auto flux = self->CppSimulation.observe_flux(time, wavelength);
+    auto flux = self->CppSimulation.observe_flux(time, wavelength_min, wavelength_max);
 
     // Copy std::vector outputs into a dict of numpy arrays
     PyObject* output_flux = PyArray_SimpleNew(1, dims, NPY_DOUBLE);

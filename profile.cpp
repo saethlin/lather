@@ -1,32 +1,33 @@
 #include "profile.hpp"
 
 
-Profile::Profile() {}
-
-
-Profile::Profile(std::vector<double> rv, std::vector<double> ccf) {
+Profile::Profile(std::vector<double> rv, std::vector<double> ccf, double v_max, double grid_interval) {
+    this->v_max = v_max;
+    this->grid_interval = grid_interval;
     rv_impl = rv;
     ccf_impl = ccf;
+    stepsize = rv[1]-rv[0];
 
-    cache = std::unordered_map<double, std::shared_ptr<std::vector<double> > >();
+    cache.reserve((size_t)(2.0/grid_interval));
 
     derivative = std::vector<double>(size());
     for (auto i = 0; i < size()-1; i++) {
         derivative[i] = (ccf[i+1] - ccf[i]) / (rv[i+1] - rv[i]);
     }
-    stepsize = rv[1]-rv[0];
 }
 
 
 std::vector<double>& Profile::shift(double v_shift) {
 
-    auto& entry = cache[v_shift];
+    int index = (int)(v_shift/v_max/grid_interval + 1.0/grid_interval);
 
-    if (!entry) {
-        cache[v_shift] = std::make_shared<std::vector<double> >(size());
-        auto& ccf_shifted = *entry;
+    auto& entry = cache[index];
+    if (entry.size() == 0) {
 
-        int quotient = round(v_shift / stepsize);
+        cache[index] = std::vector<double>(size());
+        auto& ccf_shifted = cache[index];
+
+        int quotient = (int)round(v_shift / stepsize);
         double remainder = v_shift - ((double)quotient)*stepsize;
 
         if (v_shift >= 0) {
@@ -47,5 +48,5 @@ std::vector<double>& Profile::shift(double v_shift) {
             }
         }
     }
-    return *entry.get();
+    return entry;
 }

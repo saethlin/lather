@@ -2,26 +2,15 @@
 
 
 const double solar_radius = 696000.0;
-const double c = 299792458;
-const double h = 6.62606896e-34;
-const double k_b = 1.380e-23;
 const double days_to_seconds = 86400;
-
-
-double planck(double wavelength, double temperature) {
-    return 2*h*c*c*1./(wavelength*wavelength*wavelength*wavelength*wavelength*(expm1((h*c)/(wavelength*k_b*temperature))));
-}
-
-
-Star::Star() {}
 
 
 Star::Star(double radius, double period, double inclination, double temperature, double spotTempDiff,
            double limbLinear, double limbQuadratic, size_t gridSize) {
     this -> inclination = inclination * M_PI/180.0;
     this -> period = period;
-    double vrot = (2*M_PI * radius*solar_radius)/(period * days_to_seconds);
-    this -> equatorial_velocity = vrot * sin(this->inclination);
+    double edge_velocity = (2*M_PI * radius*solar_radius)/(period * days_to_seconds);
+    this -> equatorial_velocity = edge_velocity * sin(this->inclination);
     this -> temperature = temperature;
     this -> spotTempDiff = spotTempDiff;
     this -> limbLinear = limbLinear;
@@ -54,52 +43,22 @@ Star::Star(double radius, double period, double inclination, double temperature,
     }
     ifs.close();
 
-    profileQuiet = Profile(rv, ccfQuiet);
-    profileActive = Profile(rv, ccfActive);
+    profileQuiet = Profile(rv, ccfQuiet, equatorial_velocity, grid_interval);
+    profileActive = Profile(rv, ccfActive, equatorial_velocity, grid_interval);
 
-    std::ostringstream pathstream;
-    pathstream << ".lathercache" << "_grid" << gridSize << "_incl" << inclination << "_period" << period;
+    integrated_ccf = std::vector<double>(profileQuiet.size());
 
-    auto cache_path = pathstream.str();
-    std::ifstream cacheread(cache_path, std::ifstream::in);
+    for (double y = -1.0; y <= 1; y += grid_interval) {
 
-    if (cacheread.good()) {
-        cacheread >> fluxQuiet;
-        while (cacheread.good()) {
-            cacheread >> num;
-            integrated_ccf.push_back(num);
-        }
-        cacheread.close();
-    }
+        auto& ccfShifted = quiet_profile(y);
+        double z_bound = sqrt(1 - y*y);
+        double limb_integral = get_limb_integral(z_bound, -z_bound, y);
 
-    else {
-        integrated_ccf = std::vector<double>(profileQuiet.size());
-
-        for (double y = -1.0; y <= 1; y += grid_interval) {
-            auto& ccfShifted = quiet_profile(y);
-
-            double limb_integral = 0.0;
-            double z_bound = sqrt(1-y*y);
-
-            for (auto z = -z_bound; z <= z_bound; z+= grid_interval) {
-                double x = sqrt(1 - std::min(y*y + z*z, 1.0));
-                limb_integral += limb_brightness(x);
-            }
-
-            for (auto k = 0; k < profileQuiet.size(); k++) {
-                integrated_ccf[k] += ccfShifted[k] * limb_integral;
-            }
-
-            fluxQuiet += limb_integral;
+        for (auto k = 0; k < profileQuiet.size(); k++) {
+            integrated_ccf[k] += ccfShifted[k] * limb_integral;
         }
 
-        // Write out to the cache
-        std::ofstream cachewrite(cache_path, std::ofstream::out);
-        cachewrite << fluxQuiet << '\n' << '\n';
-        for (const auto& num : integrated_ccf) {
-            cachewrite << num << '\n';
-        }
-        cachewrite.close();
+        fluxQuiet += limb_integral;
     }
 
     // Compute the rv that will be fitted with no spots visible.
@@ -114,9 +73,6 @@ Star::Star(double radius, double period, double inclination, double temperature,
 
     fit_result = fit_rv(profileQuiet.rv(), normProfile, fit_result);
     zero_rv = fit_result[1];
-
-    //for (const auto& val : normProfile) std::cout << val << '\n';
-    //exit(0);
 }
 
 
@@ -135,19 +91,17 @@ std::vector<double>& Star::active_profile(const double y) {
 }
 
 
-double Star::limb_integral(double z_upper, double z_lower, const double y) const {
-    if (z_upper < z_lower) {
-        auto tmp = z_upper;
-        z_upper = z_lower;
-        z_lower = tmp;
-    }
-    bool sign = z_upper >= 0;
-    double limb_integral = -1./6. * z_upper * (2 * (limbQuadratic * (3*y*y + z_upper*z_upper - 6) - 3) -3*limbLinear*(-2)) -
-              1./2. * (y*y - 1.) * (limbLinear - 2*limbQuadratic) * sign*M_PI_2;
+double Star::get_limb_integral(const double z_upper, const double z_lower, const double y) const {
+    if (z_lower == z_upper) return 0;
 
-    sign = z_lower >= 0;
-    limb_integral -= -1./6. * z_lower * (2 * (limbQuadratic * (3*y*y + z_lower*z_lower - 6) - 3) -3*limbLinear*(-2)) -
-               1./2. * (y*y - 1.) * (limbLinear - 2*limbQuadratic) * sign*M_PI_2;
+    double x_upper = sqrt(1 - std::min(z_upper*z_upper + y*y, 1.0));
+    double x_lower = sqrt(1 - std::min(z_lower*z_lower + y*y, 1.0));
+
+    double limb_integral = 1./6. * (z_upper * (3*limbLinear*(x_upper-2) + 2*(limbQuadratic*(3*x_upper + 3*y*y + z_upper*z_upper - 6) + 3 )) -
+            3 * (y*y - 1)*(limbLinear + 2*limbQuadratic)*atan(z_upper/x_upper));
+
+    limb_integral -= 1./6. * (z_lower * (3*limbLinear*(x_lower-2) + 2*(limbQuadratic*(3*x_lower + 3*y*y + z_lower*z_lower - 6) + 3 )) -
+                                    3 * (y*y - 1)*(limbLinear + 2*limbQuadratic)*atan(z_lower/x_lower));
 
     return limb_integral;
 }

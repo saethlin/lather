@@ -63,12 +63,12 @@ void Simulation::clear_spots() {
 }
 
 
-std::vector<double> Simulation::observe_rv(std::vector<double>& time, double wavelength) {
+std::vector<double> Simulation::observe_rv(std::vector<double>& time, double wavelength_min, double wavelength_max) {
     std::vector<double> rv(time.size());
 
-    star.intensity = planck(wavelength, star.temperature);
+    star.intensity = planck_integral(star.temperature, wavelength_min, wavelength_max);
     for (auto &spot : spots) {
-        spot.intensity = planck(wavelength, spot.temperature) / star.intensity;
+        spot.intensity = planck_integral(spot.temperature, wavelength_min, wavelength_max) / star.intensity;
     }
 
     std::vector<double> spot_profile(star.profileActive.size());
@@ -77,7 +77,7 @@ std::vector<double> Simulation::observe_rv(std::vector<double>& time, double wav
     for (auto t = 0; t < time.size(); t++) {
         auto phase = fmod(time[t], star.period) / star.period * 2 * pi;
         for (auto &spot : spots) {
-            auto profile = spot.get_ccf(phase, wavelength);
+            auto profile = spot.get_ccf(phase);
             for (auto i = 0; i < profile.size(); i++) {
                 spot_profile[i] += profile[i];
             }
@@ -97,12 +97,12 @@ std::vector<double> Simulation::observe_rv(std::vector<double>& time, double wav
 }
 
 
-std::vector<double> Simulation::observe_flux(std::vector<double>& time, double wavelength) {
+std::vector<double> Simulation::observe_flux(std::vector<double>& time, double wavelength_min, double wavelength_max) {
     std::vector<double> flux(time.size());
-    star.intensity = planck(wavelength, star.temperature);
 
-    for (auto& spot : spots) {
-        spot.intensity = planck(wavelength, spot.temperature) / star.intensity;
+    star.intensity = planck_integral(star.temperature, wavelength_min, wavelength_max);
+    for (auto &spot : spots) {
+        spot.intensity = planck_integral(spot.temperature, wavelength_min, wavelength_max) / star.intensity;
     }
 
     for (auto t = 0; t < time.size(); t++) {
@@ -110,7 +110,7 @@ std::vector<double> Simulation::observe_flux(std::vector<double>& time, double w
         double spot_flux = 0.0;
 
         for (auto& spot : spots) {
-            spot_flux += spot.get_flux(phase, wavelength);
+            spot_flux += spot.get_flux(phase);
         }
 
         flux[t] = (star.fluxQuiet - spot_flux) / star.fluxQuiet;

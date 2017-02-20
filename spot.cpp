@@ -58,7 +58,7 @@ spot_bounds Spot::get_bounds_at(double phase) {
 }
 
 
-std::vector<double> Spot::get_ccf(double phase, double wavelength) {
+std::vector<double> Spot::get_ccf_dev(double phase) {
     std::vector<double> profile(star->profileActive.size());
     auto bounds = get_bounds_at(phase);
     if (not bounds.visible) {
@@ -87,7 +87,7 @@ std::vector<double> Spot::get_ccf(double phase, double wavelength) {
 }
 
 
-double Spot::get_flux(double phase, double wavelength) {
+double Spot::get_flux(double phase) {
     auto bounds = get_bounds_at(phase);
     if (not bounds.visible) {
         return 0.0;
@@ -102,7 +102,6 @@ double Spot::get_flux(double phase, double wavelength) {
             }
         }
     }
-    auto intensity = planck(wavelength, temperature) / star->intensity;
     return (1-intensity)*limb_integral;
 }
 
@@ -115,4 +114,29 @@ bool Spot::is_on_spot(double x, double y, double z) {
         double distance_squared = (x-center.x)*(x-center.x) + (y-center.y)*(y-center.y) + (z-center.z)*(z-center.z);
         return distance_squared < radius_squared;
     }
+}
+
+
+std::vector<double> Spot::get_ccf(double phase) {
+    std::vector<double> profile(star->profileActive.size());
+    auto bounds = BoundingShape(this, phase);
+    if (not bounds.is_visible()) {
+        return profile;
+    }
+
+    auto y_bounds = bounds.get_y_bounds();
+    for (double y = y_bounds.lower; y < y_bounds.upper; y += star->grid_interval) {
+
+        auto& ccfShifted = star->quiet_profile(y);
+        auto& ccfActiveShifted = star->active_profile(y);
+
+        auto z_bounds = bounds.get_z_bounds(y);
+        double limb_integral = star->get_limb_integral(z_bounds.lower, z_bounds.upper, y);
+
+        for (auto i = 0; i < ccfShifted.size(); i++) {
+            profile[i] += (ccfShifted[i] - intensity * ccfActiveShifted[i]) * limb_integral;
+        }
+    }
+
+    return profile;
 }
