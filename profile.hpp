@@ -11,9 +11,9 @@
 class Profile {
 public:
     Profile() {}
-    Profile(std::vector<double> rv, std::vector<double> ccf, double v_max, double grid_interval);
-    std::vector<double>& shift(double v_shift);
-    size_t size() const {return rv().size();}
+    Profile(const std::vector<double> rv, const std::vector<double> ccf, const double v_max, const double grid_interval);
+    std::vector<double>& shift(const double v_shift) const;
+    const size_t size() const {return rv().size();}
     const std::vector<double>& rv() const {return rv_impl;}
     const std::vector<double>& ccf() const {return ccf_impl;}
 
@@ -22,7 +22,7 @@ private:
     std::vector<double> rv_impl;
     std::vector<double> ccf_impl;
     std::vector<double> derivative;
-    std::vector<std::vector<double> > cache;
+    mutable std::vector<std::vector<double> > cache;
 };
 
 

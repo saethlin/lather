@@ -13,7 +13,7 @@ set(SOURCE_FILES
         star.hpp star.cpp
         profile.hpp profile.cpp
         Point.h Point.cpp
-        lather.cpp BoundingShape.cpp BoundingShape.h)
+        lather.cpp BoundingShape.cpp BoundingShape.h fitrv.cpp)
 
 link_libraries(gsl gslcblas)
 

@@ -118,10 +118,3 @@ std::vector<double> Simulation::observe_flux(std::vector<double>& time, double w
     normalize(flux);
     return flux;
 }
-
-
-/*
-void Simulation::fit(std::vector<double>& time, std::vector<double>& flux) {
-    fit_sim(this, time, flux);
-}
-*/

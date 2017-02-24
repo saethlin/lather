@@ -1,7 +1,7 @@
 #include "profile.hpp"
 
 
-Profile::Profile(std::vector<double> rv, std::vector<double> ccf, double v_max, double grid_interval) {
+Profile::Profile(const std::vector<double> rv, const std::vector<double> ccf, const double v_max, const double grid_interval) {
     this->v_max = v_max;
     this->grid_interval = grid_interval;
     rv_impl = rv;
@@ -17,18 +17,17 @@ Profile::Profile(std::vector<double> rv, std::vector<double> ccf, double v_max, 
 }
 
 
-std::vector<double>& Profile::shift(double v_shift) {
+std::vector<double>& Profile::shift(const double v_shift) const {
 
-    int index = (int)(v_shift/v_max/grid_interval + 1.0/grid_interval);
+    const int index = (int)(v_shift/v_max/grid_interval + 1.0/grid_interval);
 
-    auto& entry = cache[index];
-    if (entry.size() == 0) {
+    auto& ccf_shifted = cache[index];
+    if (ccf_shifted.size() == 0) {
 
-        cache[index] = std::vector<double>(size());
-        auto& ccf_shifted = cache[index];
+        ccf_shifted = std::vector<double>(size());
 
-        int quotient = (int)round(v_shift / stepsize);
-        double remainder = v_shift - ((double)quotient)*stepsize;
+        const int quotient = (int)round(v_shift / stepsize);
+        const double remainder = v_shift - ((double)quotient)*stepsize;
 
         if (v_shift >= 0) {
             for (auto i = 0; i < quotient+1; i++) {
@@ -48,5 +47,5 @@ std::vector<double>& Profile::shift(double v_shift) {
             }
         }
     }
-    return entry;
+    return ccf_shifted;
 }

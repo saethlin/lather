@@ -26,6 +26,8 @@ public:
     std::vector<double>& active_profile(const double y);
     std::vector<double>& quiet_profile(const double y);
 
+    friend class Spot;
+
     double inclination;
     double period;
     double temperature, spotTempDiff;

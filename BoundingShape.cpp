@@ -42,8 +42,14 @@ bounds BoundingShape::get_y_bounds() const {
     double y_max = circle_center.y + radius*(cos(theta_y_max)*a.y + sin(theta_y_max)*b.y);
     double y_min = circle_center.y + radius*(cos(theta_y_min)*a.y + sin(theta_y_min)*b.y);
 
-    y_min = floor(y_min/spot->star->grid_interval)*spot->star->grid_interval;
     y_max = ceil(y_max/spot->star->grid_interval)*spot->star->grid_interval;
+    y_min = floor(y_min/spot->star->grid_interval)*spot->star->grid_interval;
+
+    double x_max = circle_center.x + radius*(cos(theta_y_max)*a.y + sin(theta_y_max)*b.y);
+    double x_min = circle_center.x + radius*(cos(theta_y_min)*a.y + sin(theta_y_min)*b.y);
+
+    if (x_max < 0) y_max = 1.0;
+    if (x_min < 0) y_min = -1.0;
 
     return {y_min, y_max};
 }
@@ -62,8 +68,8 @@ bounds BoundingShape::get_z_bounds(const double y) const {
     double z_max = circle_center.z + radius*(cos(theta_z_max)*a.z + sin(theta_z_max)*b.z);
     double z_min = circle_center.z + radius*(cos(theta_z_min)*a.z + sin(theta_z_min)*b.z);
 
-    z_min = floor(z_min/spot->star->grid_interval)*spot->star->grid_interval;
     z_max = ceil(z_max/spot->star->grid_interval)*spot->star->grid_interval;
+    z_min = floor(z_min/spot->star->grid_interval)*spot->star->grid_interval;
 
     return {z_min, z_max};
 }
