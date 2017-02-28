@@ -19,12 +19,12 @@ void normalize(std::vector<double>& vec);
 class Star {
 public:
     Star() {}
-    Star(double radius, double period, double inclination, double temperature, double spotTempDiff,
-                    double limbLinear, double limbQuadratic, size_t gridSize);
+    Star(const double radius, const double period, const double inclination, const double temperature,
+         const double spotTempDiff, const double limbLinear, const double limbQuadratic, const size_t gridSize);
     double get_limb_integral(const double z_upper, const double z_lower, const double y) const;
     double limb_brightness(const double r_cos) const;
-    std::vector<double>& active_profile(const double y);
-    std::vector<double>& quiet_profile(const double y);
+    std::vector<double>& active_profile(const double y) const;
+    std::vector<double>& quiet_profile(const double y) const;
 
     friend class Spot;
 

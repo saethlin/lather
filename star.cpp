@@ -81,12 +81,12 @@ double Star::limb_brightness(const double r_cos) const {
 }
 
 
-std::vector<double>& Star::quiet_profile(const double y) {
+std::vector<double>& Star::quiet_profile(const double y) const {
     return profileQuiet.shift(y * equatorial_velocity);
 }
 
 
-std::vector<double>& Star::active_profile(const double y) {
+std::vector<double>& Star::active_profile(const double y) const {
     return profileActive.shift(y * equatorial_velocity);
 }
 

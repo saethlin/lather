@@ -2,15 +2,15 @@
 
 
 void normalize(std::vector<double>& vec) {
-    auto max = *std::max_element(vec.begin(), vec.end());
+    const auto max = *std::max_element(vec.begin(), vec.end());
     for (auto& elem : vec) {
         elem /= max;
     }
 }
 
 
-Simulation::Simulation(size_t gridSize) {
-    this -> gridSize = gridSize;
+Simulation::Simulation(const size_t gridSize) {
+    this->gridSize = gridSize;
 }
 
 
@@ -23,22 +23,22 @@ Simulation::Simulation(const char* filename) {
 
     gridSize = (size_t)reader.GetInteger("simulation", "grid_resolution", 100);
 
-    double radius = reader.GetReal("star", "radius", 1.0);
-    double period = reader.GetReal("star", "period", 25.05);
-    double inclination = reader.GetReal("star", "inclination", 90.0);
-    double temperature = reader.GetReal("star", "Tstar", 5778.0);
-    double spot_temp_diff = reader.GetReal("star", "Tdiff_spot", 663.0);
-    double limbLinear = reader.GetReal("star", "limb1", 0.29);
-    double limbQuadratic = reader.GetReal("star", "limb2", 0.34);
+    const double radius = reader.GetReal("star", "radius", 1.0);
+    const double period = reader.GetReal("star", "period", 25.05);
+    const double inclination = reader.GetReal("star", "inclination", 90.0);
+    const double temperature = reader.GetReal("star", "Tstar", 5778.0);
+    const double spot_temp_diff = reader.GetReal("star", "Tdiff_spot", 663.0);
+    const double limbLinear = reader.GetReal("star", "limb1", 0.29);
+    const double limbQuadratic = reader.GetReal("star", "limb2", 0.34);
 
     setStar(radius, period, inclination, temperature, spot_temp_diff, limbLinear, limbQuadratic);
 
     for (const auto& section : reader.GetSections()) {
         if (section.substr(0, 4) == "spot") {
-            double latitude = reader.GetReal(section, "latitude", 0.0);
-            double longitude = reader.GetReal(section, "longitude", 180.0);
-            double size = reader.GetReal(section, "size", 0.1);
-            bool plage = reader.GetBoolean(section, "plage", false);
+            const double latitude = reader.GetReal(section, "latitude", 0.0);
+            const double longitude = reader.GetReal(section, "longitude", 180.0);
+            const double size = reader.GetReal(section, "size", 0.1);
+            const bool plage = reader.GetBoolean(section, "plage", false);
 
             addSpot(latitude, longitude, size, plage);
         }
@@ -46,12 +46,13 @@ Simulation::Simulation(const char* filename) {
 }
 
 
-void Simulation::setStar(double radius, double period, double inclination, double temperature, double spot_temp_diff, double linear_limb, double quadratic_limb) {
+void Simulation::setStar(const double radius, const double period, const double inclination, const double temperature,
+                         const double spot_temp_diff, const double linear_limb, const double quadratic_limb) {
     star = Star(radius, period, inclination, temperature, spot_temp_diff, linear_limb, quadratic_limb, gridSize);
 }
 
 
-void Simulation::addSpot(double latitude, double longitude, double fillfactor, bool plage) {
+void Simulation::addSpot(const double latitude, const double longitude, const double fillfactor, const bool plage) {
     spots.emplace_back(&star, latitude, longitude, fillfactor, plage);
 }
 
@@ -61,7 +62,7 @@ void Simulation::clear_spots() {
 }
 
 
-std::vector<double> Simulation::observe_rv(std::vector<double>& time, double wavelength_min, double wavelength_max) {
+std::vector<double> Simulation::observe_rv(const std::vector<double>& time, const double wavelength_min, const double wavelength_max) {
     std::vector<double> rv(time.size());
 
     star.intensity = planck_integral(star.temperature, wavelength_min, wavelength_max);
@@ -73,7 +74,7 @@ std::vector<double> Simulation::observe_rv(std::vector<double>& time, double wav
     auto fit_guess = star.fit_result;
 
     for (auto t = 0; t < time.size(); t++) {
-        for (auto &spot : spots) {
+        for (const auto &spot : spots) {
             auto profile = spot.get_ccf(time[t]);
             for (auto i = 0; i < profile.size(); i++) {
                 spot_profile[i] += profile[i];
@@ -94,7 +95,7 @@ std::vector<double> Simulation::observe_rv(std::vector<double>& time, double wav
 }
 
 
-std::vector<double> Simulation::observe_flux(std::vector<double>& time, double wavelength_min, double wavelength_max) {
+std::vector<double> Simulation::observe_flux(const std::vector<double>& time, const double wavelength_min, const double wavelength_max) {
     std::vector<double> flux(time.size());
 
     star.intensity = planck_integral(star.temperature, wavelength_min, wavelength_max);
@@ -103,11 +104,9 @@ std::vector<double> Simulation::observe_flux(std::vector<double>& time, double w
     }
 
     for (auto t = 0; t < time.size(); t++) {
-        auto phase = fmod(time[t], star.period)/star.period * 2*M_PI;
         double spot_flux = 0.0;
-
-        for (auto& spot : spots) {
-            spot_flux += spot.get_flux(phase);
+        for (const auto& spot : spots) {
+            spot_flux += spot.get_flux(time[t]);
         }
 
         flux[t] = (star.fluxQuiet - spot_flux) / star.fluxQuiet;

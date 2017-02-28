@@ -13,8 +13,8 @@
 class Spot {
 public:
     Spot(Star* star, double latitude, double longitude, double fillfactor, bool plage);
-    std::vector<double> get_ccf(double phase);
-    double get_flux(double phase);
+    std::vector<double> get_ccf(const double time) const;
+    double get_flux(const double time) const;
     double intensity, temperature;
 
 //private:
