@@ -14,15 +14,14 @@ struct bounds {
 
 class BoundingShape {
 public:
-    BoundingShape(const Spot* spot, const double phase);
+    BoundingShape(const Spot& spot, const double phase);
     bool is_visible() const;
     bounds get_y_bounds() const;
     bounds get_z_bounds(const double y) const;
 
 private:
-    const Spot* spot;
     Point center, circle_center, a, b;
-    double radius;
+    double size, radius, grid_interval;
 };
 
 

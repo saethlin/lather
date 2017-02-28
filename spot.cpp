@@ -13,7 +13,7 @@ Spot::Spot(Star* star, double latitude, double longitude, double fillfactor, boo
 
 double Spot::get_flux(double phase) {
     double limb_integral = 0.0;
-    auto bounds = BoundingShape(this, phase);
+    auto bounds = BoundingShape(*this, phase);
     if (not bounds.is_visible()) {
         return limb_integral;
     }
@@ -27,9 +27,9 @@ double Spot::get_flux(double phase) {
 }
 
 
-std::vector<double> Spot::get_ccf(double phase) {
+std::vector<double> Spot::get_ccf(double time) {
     std::vector<double> profile(star->profileActive.size());
-    auto bounds = BoundingShape(this, phase);
+    auto bounds = BoundingShape(*this, time);
     if (not bounds.is_visible()) {
         return profile;
     }

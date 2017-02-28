@@ -1,17 +1,20 @@
 #include "BoundingShape.h"
 
 
-BoundingShape::BoundingShape(const Spot* spot, const double phase) {
-    this->spot = spot;
+BoundingShape::BoundingShape(const Spot& spot, const double time) {
+    grid_interval = spot.star->grid_interval;
+    this->size = spot.size;
 
-    double theta = phase + spot->longitude;
-    double phi = M_PI_2 - spot->latitude;
+    auto phase = fmod(time, spot.star->period) / spot.star->period * 2 * M_PI;
+
+    double theta = phase + spot.longitude;
+    double phi = M_PI_2 - spot.latitude;
     center = Point(sin(phi)*cos(theta),
                    sin(phi)*sin(theta),
                    cos(phi));
-    center.rotate_y(spot->star->inclination - M_PI_2);
+    center.rotate_y(spot.star->inclination - M_PI_2);
 
-    double depth = sqrt(1-spot->size*spot->size);
+    double depth = sqrt(1-size*size);
     circle_center = {center.x*depth, center.y*depth, center.z*depth};
 
     auto h = 1-depth;
@@ -31,7 +34,7 @@ BoundingShape::BoundingShape(const Spot* spot, const double phase) {
 
 
 bool BoundingShape::is_visible() const {
-    return center.x > -sqrt(2*spot->size);
+    return center.x > -sqrt(2*size);
 }
 
 
@@ -42,8 +45,8 @@ bounds BoundingShape::get_y_bounds() const {
     double y_max = circle_center.y + radius*(cos(theta_y_max)*a.y + sin(theta_y_max)*b.y);
     double y_min = circle_center.y + radius*(cos(theta_y_min)*a.y + sin(theta_y_min)*b.y);
 
-    y_max = ceil(y_max/spot->star->grid_interval)*spot->star->grid_interval;
-    y_min = floor(y_min/spot->star->grid_interval)*spot->star->grid_interval;
+    y_max = ceil(y_max/grid_interval)*grid_interval;
+    y_min = floor(y_min/grid_interval)*grid_interval;
 
     double x_max = circle_center.x + radius*(cos(theta_y_max)*a.y + sin(theta_y_max)*b.y);
     double x_min = circle_center.x + radius*(cos(theta_y_min)*a.y + sin(theta_y_min)*b.y);
@@ -68,8 +71,8 @@ bounds BoundingShape::get_z_bounds(const double y) const {
     double z_max = circle_center.z + radius*(cos(theta_z_max)*a.z + sin(theta_z_max)*b.z);
     double z_min = circle_center.z + radius*(cos(theta_z_min)*a.z + sin(theta_z_min)*b.z);
 
-    z_max = ceil(z_max/spot->star->grid_interval)*spot->star->grid_interval;
-    z_min = floor(z_min/spot->star->grid_interval)*spot->star->grid_interval;
+    z_max = ceil(z_max/grid_interval)*grid_interval;
+    z_min = floor(z_min/grid_interval)*grid_interval;
 
     return {z_min, z_max};
 }

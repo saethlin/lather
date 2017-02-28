@@ -1,7 +1,5 @@
 #include "simulation.hpp"
 
-const double pi = M_PI;
-
 
 void normalize(std::vector<double>& vec) {
     auto max = *std::max_element(vec.begin(), vec.end());
@@ -23,7 +21,7 @@ Simulation::Simulation(const char* filename) {
         throw std::exception();
     }
 
-    gridSize = reader.GetInteger("simulation", "grid_resolution", 100);
+    gridSize = (size_t)reader.GetInteger("simulation", "grid_resolution", 100);
 
     double radius = reader.GetReal("star", "radius", 1.0);
     double period = reader.GetReal("star", "period", 25.05);
@@ -75,9 +73,8 @@ std::vector<double> Simulation::observe_rv(std::vector<double>& time, double wav
     auto fit_guess = star.fit_result;
 
     for (auto t = 0; t < time.size(); t++) {
-        auto phase = fmod(time[t], star.period) / star.period * 2 * pi;
         for (auto &spot : spots) {
-            auto profile = spot.get_ccf(phase);
+            auto profile = spot.get_ccf(time[t]);
             for (auto i = 0; i < profile.size(); i++) {
                 spot_profile[i] += profile[i];
             }
@@ -106,7 +103,7 @@ std::vector<double> Simulation::observe_flux(std::vector<double>& time, double w
     }
 
     for (auto t = 0; t < time.size(); t++) {
-        auto phase = fmod(time[t], star.period)/star.period * 2*pi;
+        auto phase = fmod(time[t], star.period)/star.period * 2*M_PI;
         double spot_flux = 0.0;
 
         for (auto& spot : spots) {
