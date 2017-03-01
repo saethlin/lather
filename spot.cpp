@@ -7,7 +7,12 @@ Spot::Spot(Star* star, const double latitude, const double longitude, const doub
     size = sqrt(2*fillfactor);
     this->star = star;
     this->plage = plage;
-    this->temperature = star->temperature - star->spotTempDiff;
+    if (plage) {
+        this->temperature = star->temperature + star->spotTempDiff;
+    }
+    else {
+        this->temperature = star->temperature - star->spotTempDiff;
+    }
 }
 
 

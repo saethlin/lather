@@ -3,10 +3,9 @@
 
 BoundingShape::BoundingShape(const Spot& spot, const double time) {
     grid_interval = spot.star->grid_interval;
-    this->size = spot.size;
+    size = spot.size;
 
     const double phase = fmod(time, spot.star->period) / spot.star->period * 2 * M_PI;
-
     const double theta = phase + spot.longitude;
     const double phi = M_PI_2 - spot.latitude;
     center = Point(sin(phi)*cos(theta),
