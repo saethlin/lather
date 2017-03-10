@@ -1,9 +1,10 @@
-#include "BoundingShape.h"
+#include "boundingshape.hpp"
 
 
 BoundingShape::BoundingShape(const Spot& spot, const double time) {
     grid_interval = spot.star->grid_interval;
     size = spot.size;
+    this-> time = time;
 
     const double phase = fmod(time, spot.star->period) / spot.star->period * 2 * M_PI;
     const double theta = phase + spot.longitude;
@@ -37,9 +38,13 @@ bool BoundingShape::is_visible() const {
 }
 
 
-bounds BoundingShape::get_y_bounds() const {
-    const double theta_y_max = -2 * atan(a.y/b.y - (sqrt(a.y*a.y + b.y*b.y)/b.y));
-    const double theta_y_min = -2 * atan(a.y/b.y + (sqrt(a.y*a.y + b.y*b.y)/b.y));
+bounds BoundingShape::y_bounds() const {
+    double theta_y_max = -2 * atan((a.y - sqrt(a.y * a.y + b.y * b.y)) / b.y);
+    double theta_y_min = -2 * atan((a.y + sqrt(a.y * a.y + b.y * b.y)) / b.y);
+    if (b.y == 0) {
+        theta_y_max = M_PI;
+        theta_y_min = 0;
+    }
 
     double y_max = circle_center.y + radius*(cos(theta_y_max)*a.y + sin(theta_y_max)*b.y);
     double y_min = circle_center.y + radius*(cos(theta_y_min)*a.y + sin(theta_y_min)*b.y);
@@ -51,14 +56,15 @@ bounds BoundingShape::get_y_bounds() const {
     const double x_max = circle_center.x + radius*(cos(theta_y_max)*a.y + sin(theta_y_max)*b.y);
     const double x_min = circle_center.x + radius*(cos(theta_y_min)*a.y + sin(theta_y_min)*b.y);
 
-    if (x_max < 0) y_max = 1.0;
-    if (x_min < 0) y_min = -1.0;
+    if (x_max < 0 || x_min < 0) {
+        return {0, 0};
+    }
 
     return {y_min, y_max};
 }
 
 
-bounds BoundingShape::get_z_bounds(const double y) const {
+bounds BoundingShape::z_bounds(const double y) const {
 
     double interior = a.y*a.y*radius*radius + b.y*b.y*radius*radius - circle_center.y*circle_center.y + 2.*circle_center.y*y - y*y;
     interior = std::max(interior, 0.0);

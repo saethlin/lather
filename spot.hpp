@@ -4,8 +4,8 @@
 
 #include "star.hpp"
 #include "profile.hpp"
-#include "Point.h"
-#include "BoundingShape.h"
+#include "point.hpp"
+#include "boundingshape.hpp"
 #include <vector>
 #include <math.h>
 

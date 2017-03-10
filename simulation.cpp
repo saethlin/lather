@@ -9,11 +9,6 @@ void normalize(std::vector<double>& vec) {
 }
 
 
-Simulation::Simulation(const size_t gridSize) {
-    this->gridSize = gridSize;
-}
-
-
 Simulation::Simulation(const char* filename) {
 
     INIReader reader(filename);
@@ -21,7 +16,7 @@ Simulation::Simulation(const char* filename) {
         throw std::exception();
     }
 
-    gridSize = (size_t)reader.GetInteger("simulation", "grid_resolution", 100);
+    grid_size = (size_t)reader.GetInteger("star", "grid_resolution", 100);
 
     const double radius = reader.GetReal("star", "radius", 1.0);
     const double period = reader.GetReal("star", "period", 25.05);
@@ -31,7 +26,7 @@ Simulation::Simulation(const char* filename) {
     const double limbLinear = reader.GetReal("star", "limb1", 0.29);
     const double limbQuadratic = reader.GetReal("star", "limb2", 0.34);
 
-    setStar(radius, period, inclination, temperature, spot_temp_diff, limbLinear, limbQuadratic);
+    set_star(radius, period, inclination, temperature, spot_temp_diff, limbLinear, limbQuadratic);
 
     for (const auto& section : reader.GetSections()) {
         if (section.substr(0, 4) == "spot") {
@@ -40,19 +35,19 @@ Simulation::Simulation(const char* filename) {
             const double size = reader.GetReal(section, "size", 0.1);
             const bool plage = reader.GetBoolean(section, "plage", false);
 
-            addSpot(latitude, longitude, size, plage);
+            add_spot(latitude, longitude, size, plage);
         }
     }
 }
 
 
-void Simulation::setStar(const double radius, const double period, const double inclination, const double temperature,
-                         const double spot_temp_diff, const double linear_limb, const double quadratic_limb) {
-    star = Star(radius, period, inclination, temperature, spot_temp_diff, linear_limb, quadratic_limb, gridSize);
+void Simulation::set_star(double radius, double period, double inclination, double temperature,
+                          double spot_temp_diff, double linear_limb, double quadratic_limb) {
+    star = Star(radius, period, inclination, temperature, spot_temp_diff, linear_limb, quadratic_limb, grid_size);
 }
 
 
-void Simulation::addSpot(const double latitude, const double longitude, const double fillfactor, const bool plage) {
+void Simulation::add_spot(double latitude, double longitude, double fillfactor, bool plage) {
     spots.emplace_back(&star, latitude, longitude, fillfactor, plage);
 }
 
@@ -70,7 +65,7 @@ std::vector<double> Simulation::observe_rv(const std::vector<double>& time, cons
         spot.intensity = planck_integral(spot.temperature, wavelength_min, wavelength_max) / star.intensity;
     }
 
-    std::vector<double> spot_profile(star.profileActive.size());
+    std::vector<double> spot_profile(star.profile_active.size());
     auto fit_guess = star.fit_result;
 
     for (auto t = 0; t < time.size(); t++) {
@@ -85,7 +80,7 @@ std::vector<double> Simulation::observe_rv(const std::vector<double>& time, cons
             spot_profile[i] = star.integrated_ccf[i] - spot_profile[i];
         }
         normalize(spot_profile);
-        auto fit_result = fit_rv(star.profileQuiet.rv(), spot_profile, fit_guess);
+        auto fit_result = fit_rv(star.profile_quiet.rv(), spot_profile, fit_guess);
         rv[t] = fit_result[1] - star.zero_rv;
 
         for (auto &elem : spot_profile) elem = 0.0;
@@ -109,7 +104,7 @@ std::vector<double> Simulation::observe_flux(const std::vector<double>& time, co
             spot_flux += spot.get_flux(time[t]);
         }
 
-        flux[t] = (star.fluxQuiet - spot_flux) / star.fluxQuiet;
+        flux[t] = (star.flux_quiet - spot_flux) / star.flux_quiet;
     }
     normalize(flux);
     return flux;

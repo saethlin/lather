@@ -5,89 +5,83 @@ const double solar_radius = 696000.0;
 const double days_to_seconds = 86400;
 
 
-Star::Star(double radius, double period, double inclination, double temperature, double spotTempDiff,
-           double limbLinear, double limbQuadratic, size_t gridSize) {
+Star::Star(const double radius, const double period, double inclination, double temperature, double spot_temp_diff,
+           const double limb_linear, const double limb_quadratic, size_t gridSize) {
     this -> inclination = inclination * M_PI/180.0;
     this -> period = period;
     double edge_velocity = (2*M_PI * radius*solar_radius)/(period * days_to_seconds);
     this -> equatorial_velocity = edge_velocity * sin(this->inclination);
     this -> temperature = temperature;
-    this -> spotTempDiff = spotTempDiff;
-    this -> limbLinear = limbLinear;
-    this -> limbQuadratic = limbQuadratic;
+    this -> spot_temp_diff = spot_temp_diff;
+    this -> limb_linear = limb_linear;
+    this -> limb_quadratic = limb_quadratic;
     this -> grid_interval = 2.0/gridSize;
 
     // Setup for profiles
     std::vector<double> rv;
-    std::vector<double> ccfQuiet;
-    std::vector<double> ccfActive;
+    std::vector<double> ccf_quiet;
+    std::vector<double> ccf_active;
 
-    // SOAP makes a decision between low or high res ccf based on rotational velocity
     std::ifstream ifs("/home/ben/lather/resources/solarccfhires.txt");
     std::string line;
-    double num;
 
     // Skip first two header lines
     getline(ifs, line);
     getline(ifs, line);
 
-    while (ifs.good()) {
-        ifs >> num;
-        rv.push_back(num);
-
-        ifs >> num;
-        ccfQuiet.push_back(num);
-
-        ifs >> num;
-        ccfActive.push_back(num);
+    double rv_val, quiet_val, active_val;
+    while (ifs >> rv_val >> quiet_val >> active_val) {
+        rv.push_back(rv_val);
+        ccf_quiet.push_back(quiet_val);
+        ccf_active.push_back(active_val);
     }
     ifs.close();
 
-    profileQuiet = Profile(rv, ccfQuiet, equatorial_velocity, grid_interval);
-    profileActive = Profile(rv, ccfActive, equatorial_velocity, grid_interval);
+    profile_quiet = Profile(rv, ccf_quiet, equatorial_velocity, grid_interval);
+    profile_active = Profile(rv, ccf_active, equatorial_velocity, grid_interval);
 
-    integrated_ccf = std::vector<double>(profileQuiet.size());
+    integrated_ccf = std::vector<double>(profile_quiet.size());
 
-    for (double y = -1.0; y <= 1; y += grid_interval) {
+    for (double y = -1.0; y <= 1.0; y += grid_interval) {
 
         auto& ccfShifted = quiet_profile(y);
         double z_bound = sqrt(1 - y*y);
         double limb_integral = get_limb_integral(z_bound, -z_bound, y);
 
-        for (auto k = 0; k < profileQuiet.size(); k++) {
+        for (auto k = 0; k < profile_quiet.size(); k++) {
             integrated_ccf[k] += ccfShifted[k] * limb_integral;
         }
 
-        fluxQuiet += limb_integral;
+        flux_quiet += limb_integral;
     }
 
     // Compute the rv that will be fitted with no spots visible.
-    std::vector<double> normProfile(integrated_ccf);
-    normalize(normProfile);
+    std::vector<double> normalized_profile(integrated_ccf);
+    normalize(normalized_profile);
 
     fit_result = std::vector<double>(4);
-    fit_result[0] = normProfile[normProfile.size()/2] - normProfile[0];
-    fit_result[1] = profileQuiet.rv()[normProfile.size()/2];
+    fit_result[0] = normalized_profile[normalized_profile.size()/2] - normalized_profile[0];
+    fit_result[1] = profile_quiet.rv()[normalized_profile.size()/2];
     fit_result[2] = 2.71; // TODO Remove this magic number
-    fit_result[3] = normProfile[0];
+    fit_result[3] = normalized_profile[0];
 
-    fit_result = fit_rv(profileQuiet.rv(), normProfile, fit_result);
+    fit_result = fit_rv(profile_quiet.rv(), normalized_profile, fit_result);
     zero_rv = fit_result[1];
 }
 
 
 double Star::limb_brightness(const double r_cos) const {
-    return 1 - limbLinear * (1 - r_cos) - limbQuadratic * (1 - r_cos) * (1 - r_cos);
+    return 1 - limb_linear * (1 - r_cos) - limb_quadratic * (1 - r_cos) * (1 - r_cos);
 }
 
 
 std::vector<double>& Star::quiet_profile(const double y) const {
-    return profileQuiet.shift(y * equatorial_velocity);
+    return profile_quiet.shift(y * equatorial_velocity);
 }
 
 
 std::vector<double>& Star::active_profile(const double y) const {
-    return profileActive.shift(y * equatorial_velocity);
+    return profile_active.shift(y * equatorial_velocity);
 }
 
 
@@ -97,11 +91,11 @@ double Star::get_limb_integral(const double z_upper, const double z_lower, const
     double x_upper = sqrt(1 - std::min(z_upper*z_upper + y*y, 1.0));
     double x_lower = sqrt(1 - std::min(z_lower*z_lower + y*y, 1.0));
 
-    double limb_integral = 1./6. * (z_upper * (3*limbLinear*(x_upper-2) + 2*(limbQuadratic*(3*x_upper + 3*y*y + z_upper*z_upper - 6) + 3 )) -
-            3 * (y*y - 1)*(limbLinear + 2*limbQuadratic)*atan(z_upper/x_upper));
+    double limb_integral = 1./6. * (z_upper * (3*limb_linear*(x_upper-2) + 2*(limb_quadratic*(3*x_upper + 3*y*y + z_upper*z_upper - 6) + 3 )) -
+            3 * (y*y - 1)*(limb_linear + 2*limb_quadratic)*atan(z_upper/x_upper));
 
-    limb_integral -= 1./6. * (z_lower * (3*limbLinear*(x_lower-2) + 2*(limbQuadratic*(3*x_lower + 3*y*y + z_lower*z_lower - 6) + 3 )) -
-                                    3 * (y*y - 1)*(limbLinear + 2*limbQuadratic)*atan(z_lower/x_lower));
+    limb_integral -= 1./6. * (z_lower * (3*limb_linear*(x_lower-2) + 2*(limb_quadratic*(3*x_lower + 3*y*y + z_lower*z_lower - 6) + 3 )) -
+                                    3 * (y*y - 1)*(limb_linear + 2*limb_quadratic)*atan(z_lower/x_lower));
 
     return limb_integral;
 }

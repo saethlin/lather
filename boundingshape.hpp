@@ -1,10 +1,9 @@
 #ifndef LATHER_BOUNDINGSHAPE_H
 #define LATHER_BOUNDINGSHAPE_H
 
+
+#include "point.hpp"
 #include "spot.hpp"
-
-
-class Spot;
 
 
 struct bounds {
@@ -12,16 +11,19 @@ struct bounds {
 };
 
 
+class Spot;
+
+
 class BoundingShape {
 public:
     BoundingShape(const Spot& spot, const double phase);
     bool is_visible() const;
-    bounds get_y_bounds() const;
-    bounds get_z_bounds(const double y) const;
+    bounds y_bounds() const;
+    bounds z_bounds(const double y) const;
 
 private:
     Point center, circle_center, a, b;
-    double size, radius, grid_interval;
+    double size, radius, grid_interval, time;
 };
 
 

@@ -8,10 +8,10 @@ Spot::Spot(Star* star, const double latitude, const double longitude, const doub
     this->star = star;
     this->plage = plage;
     if (plage) {
-        this->temperature = star->temperature + star->spotTempDiff;
+        this->temperature = star->temperature + star->spot_temp_diff;
     }
     else {
-        this->temperature = star->temperature - star->spotTempDiff;
+        this->temperature = star->temperature - star->spot_temp_diff;
     }
 }
 
@@ -23,33 +23,33 @@ double Spot::get_flux(const double time) const {
         return limb_integral;
     }
 
-    const auto y_bounds = bounds.get_y_bounds();
+    const auto y_bounds = bounds.y_bounds();
     for (auto y = y_bounds.lower; y < y_bounds.upper; y += star->grid_interval) {
-        const auto z_bounds = bounds.get_z_bounds(y);
-        limb_integral += star->get_limb_integral(y, z_bounds.lower, z_bounds.upper);
+        const auto z_bounds = bounds.z_bounds(y);
+        limb_integral += star->get_limb_integral(z_bounds.lower, z_bounds.upper, y);
     }
     return (1-intensity)*limb_integral;
 }
 
 
 std::vector<double> Spot::get_ccf(const double time) const {
-    std::vector<double> profile(star->profileActive.size());
+    std::vector<double> profile(star->profile_active.size());
     const auto bounds = BoundingShape(*this, time);
     if (not bounds.is_visible()) {
         return profile;
     }
 
-    const auto y_bounds = bounds.get_y_bounds();
+    const auto y_bounds = bounds.y_bounds();
     for (double y = y_bounds.lower; y < y_bounds.upper; y += star->grid_interval) {
 
-        const auto& ccfShifted = star->quiet_profile(y);
-        const auto& ccfActiveShifted = star->active_profile(y);
+        const auto& ccf_quiet_shifted = star->quiet_profile(y);
+        const auto& ccf_active_shifted = star->active_profile(y);
 
-        const auto z_bounds = bounds.get_z_bounds(y);
+        const auto z_bounds = bounds.z_bounds(y);
         const double limb_integral = star->get_limb_integral(z_bounds.lower, z_bounds.upper, y);
 
-        for (auto i = 0; i < ccfShifted.size(); i++) {
-            profile[i] += (ccfShifted[i] - intensity * ccfActiveShifted[i]) * limb_integral;
+        for (auto i = 0; i < ccf_quiet_shifted.size(); i++) {
+            profile[i] += (ccf_quiet_shifted[i] - intensity * ccf_active_shifted[i]) * limb_integral;
         }
     }
 

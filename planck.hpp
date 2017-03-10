@@ -1,9 +1,10 @@
 #ifndef LATHER_PLANCK_H
 #define LATHER_PLANCK_H
 
-#include <stdio.h>
+
 #include <math.h>
 #include <gsl/gsl_integration.h>
+
 
 const double c = 299792458;
 const double h = 6.62606896e-34;
