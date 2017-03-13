@@ -56,8 +56,11 @@ bounds BoundingShape::y_bounds() const {
     const double x_max = circle_center.x + radius*(cos(theta_y_max)*a.y + sin(theta_y_max)*b.y);
     const double x_min = circle_center.x + radius*(cos(theta_y_min)*a.y + sin(theta_y_min)*b.y);
 
-    if (x_max < 0 || x_min < 0) {
-        return {0, 0};
+    if (x_max < 0.0) {
+        y_max = 1.0;
+    }
+    if (x_min < 0.0) {
+        y_min = -1.0;
     }
 
     return {y_min, y_max};
@@ -81,4 +84,9 @@ bounds BoundingShape::z_bounds(const double y) const {
     z_min = floor(z_min/grid_interval)*grid_interval;
 
     return {z_min, z_max};
+}
+
+
+bounds BoundingShape::edge_z_bounds(const double y) const {
+    return {};
 }

@@ -16,8 +16,7 @@ Simulation::Simulation(const char* filename) {
         throw std::exception();
     }
 
-    grid_size = (size_t)reader.GetInteger("star", "grid_resolution", 100);
-
+    const size_t grid_size = (size_t)reader.GetInteger("star", "grid_resolution", 100);
     const double radius = reader.GetReal("star", "radius", 1.0);
     const double period = reader.GetReal("star", "period", 25.05);
     const double inclination = reader.GetReal("star", "inclination", 90.0);
@@ -26,7 +25,7 @@ Simulation::Simulation(const char* filename) {
     const double limbLinear = reader.GetReal("star", "limb1", 0.29);
     const double limbQuadratic = reader.GetReal("star", "limb2", 0.34);
 
-    set_star(radius, period, inclination, temperature, spot_temp_diff, limbLinear, limbQuadratic);
+    set_star(radius, period, inclination, temperature, spot_temp_diff, limbLinear, limbQuadratic, grid_size);
 
     for (const auto& section : reader.GetSections()) {
         if (section.substr(0, 4) == "spot") {
@@ -42,7 +41,7 @@ Simulation::Simulation(const char* filename) {
 
 
 void Simulation::set_star(double radius, double period, double inclination, double temperature,
-                          double spot_temp_diff, double linear_limb, double quadratic_limb) {
+                          double spot_temp_diff, double linear_limb, double quadratic_limb, size_t grid_size) {
     star = Star(radius, period, inclination, temperature, spot_temp_diff, linear_limb, quadratic_limb, grid_size);
 }
 

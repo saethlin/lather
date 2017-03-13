@@ -20,6 +20,7 @@ public:
     bool is_visible() const;
     bounds y_bounds() const;
     bounds z_bounds(const double y) const;
+    bounds edge_z_bounds(const double y) const;
 
 private:
     Point center, circle_center, a, b;

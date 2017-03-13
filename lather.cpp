@@ -16,14 +16,13 @@ int main() {
 
     auto rv = simulation.observe_rv(time, 5000e-10, 5001e-10);
 
-    /*
     for (const auto& val : rv) {
         std::cout << val << '\n';
     }
-    */
+
     clock_t end = clock();
     double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;
-    std::cout << "Run took: " << elapsed_secs << std::endl;
+    //std::cout << "Run took: " << elapsed_secs << std::endl;
 
     return 0;
 }

@@ -26,13 +26,8 @@ public:
     std::vector<double>& active_profile(const double y) const;
     std::vector<double>& quiet_profile(const double y) const;
 
-    double inclination;
-    double period;
-    double temperature, spot_temp_diff;
-    double limb_linear, limb_quadratic;
-    double intensity;
-    double grid_interval;
-    double flux_quiet, zero_rv;
+    double period, inclination, temperature, spot_temp_diff, limb_linear, limb_quadratic, grid_interval;
+    double intensity, flux_quiet, zero_rv;
     Profile profile_quiet, profile_active;
     std::vector<double> integrated_ccf;
     std::vector<double> fit_result;

@@ -15,16 +15,14 @@ class Simulation {
 public:
     Simulation() {}
     Simulation(const char* filename);
-    Simulation(size_t gridSize);
-    void set_star(double radius, double period, double inclination, double temperature, double spot_temp_diff,
-                  double linear_limb, double quadratic_limb);
-    void add_spot(double latitude, double longitude, double size, bool plage);
+    void set_star(const double radius, const double period, const double inclination, const double temperature,
+                  const double spot_temp_diff, const double linear_limb, const double quadratic_limb, const size_t grid_size);
+    void add_spot(const double latitude, const double longitude, const double size, const bool plage);
     void clear_spots();
     std::vector<double> observe_rv(const std::vector<double>& time, const double wavelength_min, const double wavelength_max);
     std::vector<double> observe_flux(const std::vector<double>& time, const double wavelength_min, const double wavelength_max);
 
 private:
-    size_t grid_size;
     Star star;
     std::vector<Spot> spots;
 };

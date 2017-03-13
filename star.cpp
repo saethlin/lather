@@ -5,37 +5,37 @@ const double solar_radius = 696000.0;
 const double days_to_seconds = 86400;
 
 
-Star::Star(const double radius, const double period, double inclination, double temperature, double spot_temp_diff,
-           const double limb_linear, const double limb_quadratic, size_t gridSize) {
-    this -> inclination = inclination * M_PI/180.0;
-    this -> period = period;
-    double edge_velocity = (2*M_PI * radius*solar_radius)/(period * days_to_seconds);
-    this -> equatorial_velocity = edge_velocity * sin(this->inclination);
-    this -> temperature = temperature;
-    this -> spot_temp_diff = spot_temp_diff;
-    this -> limb_linear = limb_linear;
-    this -> limb_quadratic = limb_quadratic;
-    this -> grid_interval = 2.0/gridSize;
+Star::Star(const double radius, const double period, const double inclination, const double temperature,
+           const double spot_temp_diff, const double limb_linear, const double limb_quadratic, size_t gridSize) {
+    this->inclination = inclination * M_PI / 180.0;
+    this->period = period;
+    double edge_velocity = (2 * M_PI * radius * solar_radius) / (period * days_to_seconds);
+    this->equatorial_velocity = edge_velocity * sin(this->inclination);
+    this->temperature = temperature;
+    this->spot_temp_diff = spot_temp_diff;
+    this->limb_linear = limb_linear;
+    this->limb_quadratic = limb_quadratic;
+    this->grid_interval = 2.0 / gridSize;
 
     // Setup for profiles
     std::vector<double> rv;
     std::vector<double> ccf_quiet;
     std::vector<double> ccf_active;
+    {
+        std::ifstream ifs("/home/ben/lather/resources/solarccfhires.txt");
+        std::string line;
 
-    std::ifstream ifs("/home/ben/lather/resources/solarccfhires.txt");
-    std::string line;
+        // Skip first two header lines
+        getline(ifs, line);
+        getline(ifs, line);
 
-    // Skip first two header lines
-    getline(ifs, line);
-    getline(ifs, line);
-
-    double rv_val, quiet_val, active_val;
-    while (ifs >> rv_val >> quiet_val >> active_val) {
-        rv.push_back(rv_val);
-        ccf_quiet.push_back(quiet_val);
-        ccf_active.push_back(active_val);
+        double rv_val, quiet_val, active_val;
+        while (ifs >> rv_val >> quiet_val >> active_val) {
+            rv.push_back(rv_val);
+            ccf_quiet.push_back(quiet_val);
+            ccf_active.push_back(active_val);
+        }
     }
-    ifs.close();
 
     profile_quiet = Profile(rv, ccf_quiet, equatorial_velocity, grid_interval);
     profile_active = Profile(rv, ccf_active, equatorial_velocity, grid_interval);
