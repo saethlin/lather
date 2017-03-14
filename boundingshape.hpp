@@ -20,9 +20,9 @@ public:
     bool is_visible() const;
     bounds y_bounds() const;
     bounds z_bounds(const double y) const;
-    bounds edge_z_bounds(const double y) const;
 
 private:
+    bool on_spot(const double y, const double z) const;
     Point center, circle_center, a, b;
     double size, radius, grid_interval, time;
 };

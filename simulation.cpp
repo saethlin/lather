@@ -84,7 +84,7 @@ std::vector<double> Simulation::observe_rv(const std::vector<double>& time, cons
 
         for (auto &elem : spot_profile) elem = 0.0;
     }
-    for (auto& val: rv) val *= 1000;  // Convert to m/s
+    for (auto& val: rv) val *= 1000.0;  // Convert to m/s
     return rv;
 }
 

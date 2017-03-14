@@ -39,6 +39,11 @@ bool BoundingShape::is_visible() const {
 
 
 bounds BoundingShape::y_bounds() const {
+
+    if (not is_visible()) {
+        return {0.0, 0.0};
+    }
+
     double theta_y_max = -2 * atan((a.y - sqrt(a.y * a.y + b.y * b.y)) / b.y);
     double theta_y_min = -2 * atan((a.y + sqrt(a.y * a.y + b.y * b.y)) / b.y);
     if (b.y == 0) {
@@ -56,9 +61,12 @@ bounds BoundingShape::y_bounds() const {
     const double x_max = circle_center.x + radius*(cos(theta_y_max)*a.y + sin(theta_y_max)*b.y);
     const double x_min = circle_center.x + radius*(cos(theta_y_min)*a.y + sin(theta_y_min)*b.y);
 
+    // Spot hangs over the right edge of the star
     if (x_max < 0.0) {
         y_max = 1.0;
     }
+
+    // Spot wraps around the left edge of the star
     if (x_min < 0.0) {
         y_min = -1.0;
     }
@@ -77,6 +85,10 @@ bounds BoundingShape::z_bounds(const double y) const {
     const double theta_z_min = -2. * atan((b.y*radius + sqrt(interior))/
                                   (-a.y*radius + center.y - y));
 
+
+    // Compute x coordinates to check
+
+
     double z_max = circle_center.z + radius*(cos(theta_z_max)*a.z + sin(theta_z_max)*b.z);
     double z_min = circle_center.z + radius*(cos(theta_z_min)*a.z + sin(theta_z_min)*b.z);
 
@@ -87,6 +99,6 @@ bounds BoundingShape::z_bounds(const double y) const {
 }
 
 
-bounds BoundingShape::edge_z_bounds(const double y) const {
-    return {};
+bool BoundingShape::on_spot(const double y, const double z) const {
+    return false;
 }

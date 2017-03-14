@@ -19,10 +19,6 @@ Spot::Spot(Star* star, const double latitude, const double longitude, const doub
 double Spot::get_flux(const double time) const {
     double limb_integral = 0.0;
     const auto bounds = BoundingShape(*this, time);
-    if (not bounds.is_visible()) {
-        return limb_integral;
-    }
-
     const auto y_bounds = bounds.y_bounds();
     for (auto y = y_bounds.lower; y < y_bounds.upper; y += star->grid_interval) {
         const auto z_bounds = bounds.z_bounds(y);
@@ -35,10 +31,6 @@ double Spot::get_flux(const double time) const {
 std::vector<double> Spot::get_ccf(const double time) const {
     std::vector<double> profile(star->profile_active.size());
     const auto bounds = BoundingShape(*this, time);
-    if (not bounds.is_visible()) {
-        return profile;
-    }
-
     const auto y_bounds = bounds.y_bounds();
     for (double y = y_bounds.lower; y < y_bounds.upper; y += star->grid_interval) {
 
