@@ -19,6 +19,6 @@ set(SOURCE_FILES
 
 link_libraries(gsl gslcblas)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-omit-frame-pointer -march=native -Ofast -Wall -g3")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-omit-frame-pointer -march=native -O3 -Wall -g3")
 
 add_executable(lather ${SOURCE_FILES})

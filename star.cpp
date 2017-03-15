@@ -46,7 +46,7 @@ Star::Star(const double radius, const double period, const double inclination, c
 
         auto& ccfShifted = quiet_profile(y);
         double z_bound = sqrt(1 - y*y);
-        double limb_integral = get_limb_integral(z_bound, -z_bound, y);
+        double limb_integral = get_limb_integral(-z_bound, z_bound, y);
 
         for (auto k = 0; k < profile_quiet.size(); k++) {
             integrated_ccf[k] += ccfShifted[k] * limb_integral;
@@ -85,7 +85,7 @@ std::vector<double>& Star::active_profile(const double y) const {
 }
 
 
-double Star::get_limb_integral(const double z_upper, const double z_lower, const double y) const {
+double Star::get_limb_integral(const double z_lower, const double z_upper, const double y) const {
     if (z_lower == z_upper) return 0;
 
     double x_upper = sqrt(1 - std::min(z_upper*z_upper + y*y, 1.0));
