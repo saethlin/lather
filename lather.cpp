@@ -16,8 +16,9 @@ int main() {
 
     auto rv = simulation.observe_rv(time, 5000e-10, 5001e-10);
 
+
     for (const auto& val : rv) {
-        std::cout << val << '\n';
+        //std::cout << val << '\n';
     }
 
     clock_t end = clock();

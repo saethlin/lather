@@ -110,17 +110,7 @@ bounds BoundingShape::z_bounds(const double y) const {
     double z_max = circle_center.z + radius*(cos(theta_z_max)*a.z + sin(theta_z_max)*b.z);
     double z_min = circle_center.z + radius*(cos(theta_z_min)*a.z + sin(theta_z_min)*b.z);
 
-    //z_max = ceil(z_max/grid_interval)*grid_interval;
-    //z_min = floor(z_min/grid_interval)*grid_interval;
-
     return {z_min, z_max};
-}
-
-
-bool BoundingShape::on_spot(const double y, const double z) const {
-    double x = sqrt(1-(y*y + z*z));
-    double distance_squared = (y-center.y)*(y-center.y) + (z-center.z)*(z-center.z) + (x-center.x)*(x-center.x);
-    return distance_squared <= (radius*radius);
 }
 
 
@@ -129,27 +119,45 @@ bool on_star(const double y, const double z) {
 }
 
 
+bool BoundingShape::on_spot(const double y, const double z) const {
+    if (!on_star(y, z)) {
+        return false;
+    }
+    double x = sqrt(1-(y*y + z*z));
+    double distance_squared = (y-center.y)*(y-center.y) + (z-center.z)*(z-center.z) + (x-center.x)*(x-center.x);
+    return (distance_squared <= (radius*radius));
+}
+
+
 bounds BoundingShape::z_bounds_edge(const double y) const {
 
-    double z_max = 0.0;
-    double z_min = 0.0;
+    // Set both bounds to invalid values so we can detect if a spot was found
+    double z_max = 2.0;
+    double z_min = 2.0;
 
-    double step = grid_interval/100;
-
-    for (double z = center.z+radius; z > center.z-radius; z-=step) {
-        if (on_star(y, z) && on_spot(y, z)) {
+    for (double z = center.z+radius; z > center.z-radius; z-=grid_interval) {
+        if (on_spot(y, z)) {
             z_max = z;
             break;
         }
     }
 
-
-    for (double z = center.z-radius; z < center.z+radius; z+=step) {
-        if (on_star(y, z) && on_spot(y, z)) {
+    for (double z = center.z-radius; z < center.z+radius; z+=grid_interval) {
+        if (on_spot(y, z)) {
             z_min = z;
             break;
         }
     }
 
+    if (z_min > 1.0 || z_max > 1.0) {
+        z_min = 0.0;
+        z_max = 0.0;
+    }
+
     return {z_min, z_max};
 }
+
+/*0.470501 0
+0.470127 0.470125
+0.469751 0.469749
+*/
