@@ -55,6 +55,10 @@ void Simulation::clear_spots() {
     spots.clear();
 }
 
+void Simulation::check_fill_factor(double time) {
+
+}
+
 
 std::vector<double> Simulation::observe_rv(const std::vector<double>& time, const double wavelength_min, const double wavelength_max) {
     std::vector<double> rv(time.size());
@@ -107,4 +111,8 @@ std::vector<double> Simulation::observe_flux(const std::vector<double>& time, co
     }
     normalize(flux);
     return flux;
+}
+
+
+void Simulation::draw(const double time) const {
 }

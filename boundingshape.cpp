@@ -129,6 +129,7 @@ bool BoundingShape::on_spot(const double y, const double z) const {
 }
 
 
+/*
 bounds BoundingShape::z_bounds_edge(const double y) const {
 
     // Set both bounds to invalid values so we can detect if a spot was found
@@ -149,15 +150,22 @@ bounds BoundingShape::z_bounds_edge(const double y) const {
         }
     }
 
+    // Ignore the edge case where the brute force misses the spot entirely
     if (z_min > 1.0 || z_max > 1.0) {
         z_min = 0.0;
         z_max = 0.0;
     }
 
     return {z_min, z_max};
-}
+}*/
 
-/*0.470501 0
-0.470127 0.470125
-0.469751 0.469749
-*/
+bounds BoundingShape::z_bounds_edge(const double y) const {
+    const double a = center.z*center.z + center.x+center.x;
+    const double b = 2*center.z;
+    const double c = std::pow((1 + center.x+center.y+center.z - center.z*center.z)/2.0, 2) *  - center.x*center.x * sqrt(1 - y*y);
+
+    const double z_min = (-b+sqrt(b*b-4*a*c))/(2.0*a);
+    const double z_max = (-b-sqrt(b*b-4*a*c))/(2.0*a);
+    std::cout << z_min << " " << z_max << std::endl;
+    return {z_min, z_max};
+}
