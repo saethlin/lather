@@ -3,7 +3,7 @@
 
 BoundingShape::BoundingShape(const Spot& spot, const double time) {
     grid_interval = spot.star->grid_interval;
-    size = spot.size;
+    radius = spot.radius;
     this-> time = time;
 
     const double phase = fmod(time, spot.star->period) / spot.star->period * 2 * M_PI;
@@ -14,11 +14,8 @@ BoundingShape::BoundingShape(const Spot& spot, const double time) {
                    cos(phi));
     center.rotate_y(spot.star->inclination - M_PI_2);
 
-    const double depth = sqrt(1-size*size);
+    const double depth = sqrt(1-radius*radius);
     circle_center = {center.x*depth, center.y*depth, center.z*depth};
-
-    const double h = 1-depth;
-    radius = sqrt(2*h - h*h);
 
     const double a_x = 0;
     const double a_y = -circle_center.z/sqrt(circle_center.y*circle_center.y + circle_center.z*circle_center.z);
@@ -129,7 +126,7 @@ bool BoundingShape::on_spot(const double y, const double z) const {
 }
 
 
-/*
+
 bounds BoundingShape::z_bounds_edge(const double y) const {
 
     // Set both bounds to invalid values so we can detect if a spot was found
@@ -157,15 +154,19 @@ bounds BoundingShape::z_bounds_edge(const double y) const {
     }
 
     return {z_min, z_max};
-}*/
+}
 
+/*
 bounds BoundingShape::z_bounds_edge(const double y) const {
-    const double a = center.z*center.z + center.x+center.x;
-    const double b = 2*center.z;
-    const double c = std::pow((1 + center.x+center.y+center.z - center.z*center.z)/2.0, 2) *  - center.x*center.x * sqrt(1 - y*y);
+    std::cout << y << std::endl;
+    const double a = circle_center.z*circle_center.z + circle_center.x*circle_center.x;
+    const double b = -2.0*circle_center.z;
+    const double c = std::pow((1 + circle_center.x*circle_center.x + circle_center.y*circle_center.y + circle_center.z*circle_center.z - radius*radius)/2.0 - y*circle_center.y, 2) *  - circle_center.x*circle_center.x *(1 - y*y) ;
 
     const double z_min = (-b+sqrt(b*b-4*a*c))/(2.0*a);
     const double z_max = (-b-sqrt(b*b-4*a*c))/(2.0*a);
     std::cout << z_min << " " << z_max << std::endl;
+    exit(0);
     return {z_min, z_max};
 }
+*/

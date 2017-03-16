@@ -18,7 +18,7 @@ int main() {
 
 
     for (const auto& val : rv) {
-        //std::cout << val << '\n';
+        std::cout << val << '\n';
     }
 
     clock_t end = clock();

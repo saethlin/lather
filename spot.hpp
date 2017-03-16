@@ -19,7 +19,7 @@ public:
 
 //private:
     Star* star;
-    double latitude, longitude, size;
+    double latitude, longitude, radius;
     bool plage;
 };
 

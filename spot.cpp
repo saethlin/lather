@@ -4,7 +4,7 @@
 Spot::Spot(Star* star, const double latitude, const double longitude, const double fillfactor, const bool plage) {
     this->latitude = latitude * M_PI/180.0;
     this->longitude = longitude * M_PI/180.0;
-    size = sqrt(2*fillfactor);
+    radius = sqrt(2*fillfactor);
     this->star = star;
     this->plage = plage;
     if (plage) {
