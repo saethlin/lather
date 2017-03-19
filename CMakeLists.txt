@@ -15,10 +15,13 @@ set(SOURCE_FILES
         point.hpp point.cpp
         fitrv.cpp
         boundingshape.cpp boundingshape.hpp
-        lather.cpp)
+        display.cpp)
 
-link_libraries(gsl gslcblas)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-omit-frame-pointer -march=native -O3 -Wall -g3")
+link_libraries(gsl gslcblas Magick++ sfml-graphics sfml-window sfml-system)
 
-add_executable(lather ${SOURCE_FILES})
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-omit-frame-pointer -march=native -O3 -Wall")
+
+set(CMAKE_BUILD_TYPE Release)
+
+add_executable(display ${SOURCE_FILES})

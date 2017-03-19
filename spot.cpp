@@ -13,6 +13,13 @@ Spot::Spot(Star* star, const double latitude, const double longitude, const doub
     else {
         this->temperature = star->temperature - star->spot_temp_diff;
     }
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::normal_distribution<> d(0, 5.0);
+
+    time_appear = 0.0;
+    time_disappear = 15.0 + d(gen);
 }
 
 
@@ -46,4 +53,9 @@ std::vector<double> Spot::get_ccf(const double time) const {
     }
 
     return profile;
+}
+
+
+bool Spot::alive(const double time) const {
+    return time >= time_appear && time <= time_disappear;
 }

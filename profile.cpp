@@ -1,4 +1,5 @@
 #include "profile.hpp"
+#include <iostream>
 
 
 Profile::Profile(const std::vector<double> rv, const std::vector<double> ccf, const double v_max, const double grid_interval) {
@@ -8,7 +9,7 @@ Profile::Profile(const std::vector<double> rv, const std::vector<double> ccf, co
     ccf_impl = ccf;
     stepsize = rv[1]-rv[0];
 
-    cache.reserve((size_t)(2.0/grid_interval));
+    cache.resize((size_t)(2.0/grid_interval));
 
     derivative = std::vector<double>(size());
     for (auto i = 0; i < size()-1; i++) {
@@ -20,8 +21,8 @@ Profile::Profile(const std::vector<double> rv, const std::vector<double> ccf, co
 std::vector<double>& Profile::shift(const double v_shift) const {
 
     const int index = (int)(v_shift/v_max/grid_interval + 1.0/grid_interval);
-
     auto& ccf_shifted = cache[index];
+
     if (ccf_shifted.size() == 0) {
 
         ccf_shifted = std::vector<double>(size());
@@ -47,5 +48,6 @@ std::vector<double>& Profile::shift(const double v_shift) const {
             }
         }
     }
+
     return ccf_shifted;
 }

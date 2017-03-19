@@ -27,6 +27,7 @@ public:
     bounds y_bounds() const;
     bounds z_bounds(const double y) const;
     bounds z_bounds_edge(const double y) const;
+    bounds z_bounds_edge2(const double y) const;
 
 private:
     bool on_spot(const double y, const double z) const;

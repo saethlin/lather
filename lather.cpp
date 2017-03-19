@@ -11,11 +11,10 @@ int main() {
     std::vector<double> time(1000);
     std::iota(time.begin(), time.end(), 0);
     for (auto & val : time) {
-        val = val/(double)time.size() * 25.0;
+        val = val/(double)time.size() * 100.0;
     }
 
     auto rv = simulation.observe_rv(time, 5000e-10, 5001e-10);
-
 
     for (const auto& val : rv) {
         std::cout << val << '\n';

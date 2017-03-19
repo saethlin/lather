@@ -67,6 +67,21 @@ Star::Star(const double radius, const double period, const double inclination, c
 
     fit_result = fit_rv(profile_quiet.rv(), normalized_profile, fit_result);
     zero_rv = fit_result[1];
+
+    // Draw the star
+    image.reserve(gridSize*gridSize);
+    for (double y = -1.0; y <= 1.0; y += grid_interval) {
+        for (double z = -1.0; z <= 1.0; z += grid_interval) {
+            if (y*y + z*z <= 1.0) {
+                double x = 1-(y*y+z*z);
+                x = std::max(x, 0.0);
+                image.push_back(limb_brightness(x));
+            }
+            else {
+                image.push_back(0.0);
+            }
+        }
+    }
 }
 
 

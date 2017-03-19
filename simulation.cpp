@@ -37,6 +37,8 @@ Simulation::Simulation(const char* filename) {
             add_spot(latitude, longitude, size, plage);
         }
     }
+
+    dynamic_fill_factor = reader.GetReal("star", "fillfactor", 0.0);
 }
 
 
@@ -56,7 +58,29 @@ void Simulation::clear_spots() {
 }
 
 void Simulation::check_fill_factor(double time) {
+    double current_fill_factor = 0.0;
+    for (const auto& spot : spots) {
+        if (spot.alive(time)) {
+            current_fill_factor += spot.radius;
+        }
+    }
 
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::lognormal_distribution<> fill_dist(0.5, 4.0);
+    std::uniform_real_distribution<> lat_dist(-30.0, 30.0);
+    std::uniform_real_distribution<> long_dist(0.0, 360.0);
+
+    while (current_fill_factor < dynamic_fill_factor) {
+        double new_fill_factor = fill_dist(gen)*9.4e-6;
+        if (new_fill_factor < 0.001) {
+            auto new_spot = Spot(&star, lat_dist(gen), long_dist(gen), new_fill_factor, false);
+            new_spot.time_disappear += time;
+            new_spot.time_appear += time;
+            current_fill_factor += new_spot.radius;
+            spots.push_back(new_spot);
+        }
+    }
 }
 
 
@@ -64,20 +88,28 @@ std::vector<double> Simulation::observe_rv(const std::vector<double>& time, cons
     std::vector<double> rv(time.size());
 
     star.intensity = planck_integral(star.temperature, wavelength_min, wavelength_max);
-    for (auto &spot : spots) {
-        spot.intensity = planck_integral(spot.temperature, wavelength_min, wavelength_max) / star.intensity;
-    }
 
     std::vector<double> spot_profile(star.profile_active.size());
     auto fit_guess = star.fit_result;
 
     for (auto t = 0; t < time.size(); t++) {
+
+        check_fill_factor(time[t]);
+        for (auto &spot : spots) {
+            spot.intensity = planck_integral(spot.temperature, wavelength_min, wavelength_max) / star.intensity;
+        }
+
+        //draw(time[t], t);
+
         for (const auto &spot : spots) {
-            auto profile = spot.get_ccf(time[t]);
-            for (auto i = 0; i < profile.size(); i++) {
-                spot_profile[i] += profile[i];
+            if (spot.alive(time[t])) {
+                auto profile = spot.get_ccf(time[t]);
+                for (auto i = 0; i < profile.size(); i++) {
+                    spot_profile[i] += profile[i];
+                }
             }
         }
+
         // Compute the observed profile and fit the rv: the star's quiet profile minus the spot flux
         for (auto i = 0; i < spot_profile.size(); i++) {
             spot_profile[i] = star.integrated_ccf[i] - spot_profile[i];
@@ -102,6 +134,7 @@ std::vector<double> Simulation::observe_flux(const std::vector<double>& time, co
     }
 
     for (auto t = 0; t < time.size(); t++) {
+        check_fill_factor(time[t]);
         double spot_flux = 0.0;
         for (const auto& spot : spots) {
             spot_flux += spot.get_flux(time[t]);
@@ -114,5 +147,64 @@ std::vector<double> Simulation::observe_flux(const std::vector<double>& time, co
 }
 
 
-void Simulation::draw(const double time) const {
+void Simulation::draw(const double time, const int i) const {
+    std::vector<double> image = star.image;
+    for (const auto& spot : spots) {
+        if (spot.alive(time)) {
+
+            const auto bounds = BoundingShape(spot, time);
+            auto y_bounds = bounds.y_bounds();
+            y_bounds = {round(y_bounds.upper / star.grid_interval) * star.grid_interval,
+                        round(y_bounds.lower / star.grid_interval) * star.grid_interval};
+            for (auto y = y_bounds.lower; y < y_bounds.upper; y += star.grid_interval) {
+                auto z_bounds = bounds.z_bounds(y);
+                z_bounds = {round(z_bounds.upper / star.grid_interval) * star.grid_interval,
+                            round(z_bounds.lower / star.grid_interval) * star.grid_interval};
+                for (auto z = z_bounds.lower; z < z_bounds.upper; z += star.grid_interval) {
+                    unsigned int y_index = round((y + 1.0) / 2 * 1000);
+                    unsigned int z_index = round((z + 1.0) / 2 * 1000);
+                    double x = 1 - (y * y + z * z);
+                    x = std::max(x, 0.0);
+                    image[z_index * 1000 + y_index] = star.limb_brightness(x) * spot.intensity;
+                }
+            }
+        }
+    }
+    normalize(image);
+    for (auto& val : image) val = 1-val;
+    Magick::InitializeMagick(".");
+    Magick::Image png(1000, 1000, "K", Magick::DoublePixel, image.data());
+    std::stringstream ss;
+    ss << "frame" << std::setw(5) << std::setfill('0') << i << ".png";
+    png.write(ss.str());
+}
+
+
+std::vector<uint8_t> Simulation::draw_pixmap(const double time) const {
+    std::vector<double> image = star.image;
+    for (const auto& spot : spots) {
+        if (spot.alive(time)) {
+
+            const auto bounds = BoundingShape(spot, time);
+            auto y_bounds = bounds.y_bounds();
+            y_bounds = {round(y_bounds.upper / star.grid_interval) * star.grid_interval,
+                        round(y_bounds.lower / star.grid_interval) * star.grid_interval};
+            for (auto y = y_bounds.lower; y < y_bounds.upper; y += star.grid_interval) {
+                auto z_bounds = bounds.z_bounds(y);
+                z_bounds = {round(z_bounds.upper / star.grid_interval) * star.grid_interval,
+                            round(z_bounds.lower / star.grid_interval) * star.grid_interval};
+                for (auto z = z_bounds.lower; z < z_bounds.upper; z += star.grid_interval) {
+                    unsigned int y_index = round((y + 1.0) / 2 * 1000);
+                    unsigned int z_index = round((z + 1.0) / 2 * 1000);
+                    double x = 1 - (y * y + z * z);
+                    x = std::max(x, 0.0);
+                    image[z_index * 1000 + y_index] = star.limb_brightness(x) * spot.intensity;
+                }
+            }
+        }
+    }
+    normalize(image);
+    for (auto& val : image) val *= 255;
+    std::vector<uint8_t> pixmap(image.begin(), image.end());
+    return pixmap;
 }

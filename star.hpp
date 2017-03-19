@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include <math.h>
+#include <Magick++.h>
 
 
 void normalize(std::vector<double>& vec);
@@ -31,6 +32,7 @@ public:
     Profile profile_quiet, profile_active;
     std::vector<double> integrated_ccf;
     std::vector<double> fit_result;
+    std::vector<double> image;
 
 private:
     double equatorial_velocity;
