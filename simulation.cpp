@@ -65,8 +65,7 @@ void Simulation::check_fill_factor(double time) {
         }
     }
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
+    std::mt19937 gen(spots.size());
     std::lognormal_distribution<> fill_dist(0.5, 4.0);
     std::uniform_real_distribution<> lat_dist(-30.0, 30.0);
     std::uniform_real_distribution<> long_dist(0.0, 360.0);
@@ -89,18 +88,15 @@ std::vector<double> Simulation::observe_rv(const std::vector<double>& time, cons
 
     star.intensity = planck_integral(star.temperature, wavelength_min, wavelength_max);
 
-    std::vector<double> spot_profile(star.profile_active.size());
     auto fit_guess = star.fit_result;
 
+    for (const auto& t : time) check_fill_factor(t);
+
+    double intensity = planck_integral((star.temperature-star.spot_temp_diff), wavelength_min, wavelength_max) / star.intensity;
+    for (auto &spot : spots) spot.intensity = intensity;
+
     for (auto t = 0; t < time.size(); t++) {
-
-        check_fill_factor(time[t]);
-        for (auto &spot : spots) {
-            spot.intensity = planck_integral(spot.temperature, wavelength_min, wavelength_max) / star.intensity;
-        }
-
-        //draw(time[t], t);
-
+        std::vector<double> spot_profile(star.profile_active.size());
         for (const auto &spot : spots) {
             if (spot.alive(time[t])) {
                 auto profile = spot.get_ccf(time[t]);
@@ -117,8 +113,6 @@ std::vector<double> Simulation::observe_rv(const std::vector<double>& time, cons
         normalize(spot_profile);
         auto fit_result = fit_rv(star.profile_quiet.rv(), spot_profile, fit_guess);
         rv[t] = fit_result[1] - star.zero_rv;
-
-        for (auto &elem : spot_profile) elem = 0.0;
     }
     for (auto& val: rv) val *= 1000.0;  // Convert to m/s
     return rv;
@@ -148,7 +142,7 @@ std::vector<double> Simulation::observe_flux(const std::vector<double>& time, co
 
 
 void Simulation::draw(const double time, const int i) const {
-    std::vector<double> image = star.image;
+    std::vector<double> image(star.image.begin(), star.image.end());
     for (const auto& spot : spots) {
         if (spot.alive(time)) {
 
@@ -180,8 +174,8 @@ void Simulation::draw(const double time, const int i) const {
 }
 
 
-std::vector<uint8_t> Simulation::draw_pixmap(const double time) const {
-    std::vector<double> image = star.image;
+std::vector<uint8_t> Simulation::draw_rgba(const double time) const {
+    std::vector<float> image = star.image;
     for (const auto& spot : spots) {
         if (spot.alive(time)) {
 
@@ -198,13 +192,24 @@ std::vector<uint8_t> Simulation::draw_pixmap(const double time) const {
                     unsigned int z_index = round((z + 1.0) / 2 * 1000);
                     double x = 1 - (y * y + z * z);
                     x = std::max(x, 0.0);
-                    image[z_index * 1000 + y_index] = star.limb_brightness(x) * spot.intensity;
+                    float intensity = (float)(star.limb_brightness(x)*spot.intensity);
+                    int index = z_index*1000 + y_index;
+                    image[4*index] = intensity*255;
+                    image[4*index+1] = intensity*131;
+                    image[4*index+2] = 0.0;
+                    image[4*index+3] = 0.0;
                 }
             }
         }
     }
-    normalize(image);
-    for (auto& val : image) val *= 255;
-    std::vector<uint8_t> pixmap(image.begin(), image.end());
-    return pixmap;
+
+    // Normalize
+    float max_val = *std::max_element(image.begin(), image.end());
+    for (int i = 0; i < image.size()/4; i++) {
+        image[4*i] *= 255/max_val;
+        image[4*i+1] *= 255/max_val;
+        image[4*i+2] *= 255/max_val;
+        image[4*i+3] = 255;
+    }
+    return std::vector<uint8_t>(image.begin(), image.end());
 }

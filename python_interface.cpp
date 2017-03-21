@@ -1,4 +1,4 @@
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+
 #include <exception>
 #include <stdio.h>
 #include <sstream>
@@ -16,10 +16,7 @@ typedef struct {
 
 
 static int PySimulation_init(PySimulation* self, PyObject* args, PyObject* kwargs) {
-    int gridSize, spotResolution;
     const char* filename;
-
-    static char* kwdlist1[] = {"grid_size", "spot_resolution", NULL};
     static char* kwdlist2[] = {"filename", NULL};
 
     try {
@@ -29,24 +26,24 @@ static int PySimulation_init(PySimulation* self, PyObject* args, PyObject* kwarg
     }
     catch (std::exception& e) {
         PyErr_Clear();
-        PyArg_ParseTupleAndKeywords(args, kwargs, "ii", kwdlist1, &gridSize, &spotResolution);
-        self->CppSimulation = Simulation(gridSize, spotResolution);
+        self->CppSimulation = Simulation();
         return 0;
     }
 }
 
 
 static PyObject* PySimulation_set_star(PySimulation* self, PyObject* args, PyObject* kwargs) {
+    int grid_size;
     double radius, period, inclination, temperature, spotTempDiff, limbLinear, limbQuadratic;
 
-    static char* kwdlist[] = {"radius", "period", "inclination", "temperature", "spot_temp_diff", "limb_linear", "limb_quadratic", NULL};
+    static char* kwdlist[] = {"grid_size", "radius", "period", "inclination", "temperature", "spot_temp_diff", "limb_linear", "limb_quadratic", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "ddddddd", kwdlist, &radius, &period, &inclination, &temperature, &spotTempDiff, &limbLinear, &limbQuadratic)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "iddddddd", kwdlist, &grid_size, &radius, &period, &inclination, &temperature, &spotTempDiff, &limbLinear, &limbQuadratic)) {
         return NULL;
     }
 
     // Set the C++ simulation's star
-    self->CppSimulation.setStar(radius, period, inclination, temperature, spotTempDiff, limbLinear, limbQuadratic);
+    self->CppSimulation.set_star(grid_size, radius, period, inclination, temperature, spotTempDiff, limbLinear, limbQuadratic);
 
     Py_RETURN_NONE;
 }
@@ -62,7 +59,7 @@ static PyObject* PySimulation_add_spot(PySimulation* self, PyObject* args, PyObj
         return NULL;
     }
 
-    self->CppSimulation.addSpot(latitude, longitude, size, plage);
+    self->CppSimulation.add_spot(latitude, longitude, size, plage);
 
     Py_RETURN_NONE;
 }
@@ -79,18 +76,15 @@ static PyObject* PySimulation_observe_rv(PySimulation* self, PyObject *args, PyO
     double wavelength_min, wavelength_max;
     static char* kwdlist[] = {"time", "wavelength_min", "wavelength_max", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Odd", kwdlist, &timeArg, &wavelength_min, &wavelength_max)) {
-        return NULL;
-    }
-
-    PyObject* timeArr = PyArray_FROM_OTF(timeArg, NPY_DOUBLE, NPY_IN_ARRAY);
-    if (timeArr == NULL) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O!dd", kwdlist,
+                                     &PyArray_Type, &timeArg,
+                                     &wavelength_min, &wavelength_max)) {
         return NULL;
     }
 
     // Create an std::vector that points to the same data as the input array
-    npy_intp* dims = PyArray_DIMS(timeArr);
-    double* data = (double*)PyArray_DATA(timeArr);
+    npy_intp* dims = PyArray_DIMS(timeArg);
+    double* data = (double*)PyArray_DATA(timeArg);
     std::vector<double> time(data, data+dims[0]);
 
     auto rv = self->CppSimulation.observe_rv(time, wavelength_min, wavelength_max);
@@ -111,18 +105,15 @@ static PyObject* PySimulation_observe_flux(PySimulation* self, PyObject *args, P
     double wavelength_min, wavelength_max;
     static char* kwdlist[] = {"time", "wavelength_min", "wavelength_max", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "Odd", kwdlist, &timeArg, &wavelength_min, &wavelength_max)) {
-        return NULL;
-    }
-
-    PyObject* timeArr = PyArray_FROM_OTF(timeArg, NPY_DOUBLE, NPY_IN_ARRAY);
-    if (timeArr == NULL) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "O!dd", kwdlist,
+                                     &PyArray_Type, &timeArg,
+                                     &wavelength_min, &wavelength_max)) {
         return NULL;
     }
 
     // Create an std::vector that points to the same data as the input array
-    npy_intp* dims = PyArray_DIMS(timeArr);
-    double* data = (double*)PyArray_DATA(timeArr);
+    npy_intp* dims = PyArray_DIMS(timeArg);
+    double* data = (double*)PyArray_DATA(timeArg);
     std::vector<double> time(data, data+dims[0]);
 
     auto flux = self->CppSimulation.observe_flux(time, wavelength_min, wavelength_max);

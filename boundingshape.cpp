@@ -4,7 +4,16 @@
 BoundingShape::BoundingShape(const Spot& spot, const double time) {
     grid_interval = spot.star->grid_interval;
     radius = spot.radius;
-    this-> time = time;
+
+    const double lifetime = spot.time_disappear-spot.time_appear;
+    const double growth_time = 0.1*lifetime;
+
+    if (fabs(time-spot.time_appear) < growth_time) {
+        radius *= fabs(time-spot.time_appear)/growth_time;
+    }
+    else if (fabs(time-spot.time_disappear) < growth_time) {
+        radius *= fabs(time-spot.time_disappear)/growth_time;
+    }
 
     const double phase = fmod(time, spot.star->period) / spot.star->period * 2 * M_PI;
     const double theta = phase + spot.longitude;
@@ -25,27 +34,18 @@ BoundingShape::BoundingShape(const Spot& spot, const double time) {
     const double b_x = circle_center.y*a_z - circle_center.z*a_y;
     const double b_y = circle_center.z*a_x - circle_center.x*a_z;
     const double b_z = circle_center.x*a_y - circle_center.y*a_x;
-
     b = {b_x, b_y, b_z};
 
-    visible = center.x > -radius;
-
     // Look for the smallest x value that the boundary touches to determine if the spot is entirely on the visible hemisphere
-    double theta_x_max = -2 * atan((a.x - sqrt(a.x * a.x + b.x * b.x)) / b.x);
-    double theta_x_min = -2 * atan((a.x + sqrt(a.x * a.x + b.x * b.x)) / b.x);
+    const double theta_x_max = -2 * atan((a.x - sqrt(a.x * a.x + b.x * b.x)) / b.x);
+    const double theta_x_min = -2 * atan((a.x + sqrt(a.x * a.x + b.x * b.x)) / b.x);
 
-    double x_1 = circle_center.x + radius*(cos(theta_x_max)*a.x + sin(theta_x_max)*b.x);
-    double x_2 = circle_center.x + radius*(cos(theta_x_min)*a.x + sin(theta_x_min)*b.x);
+    const double x1 = circle_center.x + radius*(cos(theta_x_max)*a.x + sin(theta_x_max)*b.x);
+    const double x2 = circle_center.x + radius*(cos(theta_x_min)*a.x + sin(theta_x_min)*b.x);
     
-    double x_min = std::min(x_1, x_2);
-    double x_max = std::max(x_1, x_2);
+    is_on_edge = x1 < 0 || x2 < 0;
+    visible = x1 > 0 || x2 > 0;
 
-    is_on_edge = x_min < 0 || x_max < 0; // Check if signs are different
-}
-
-
-bool BoundingShape::is_visible() const {
-    return visible;
 }
 
 
@@ -64,9 +64,6 @@ bounds BoundingShape::y_bounds() const {
 
     double y_max = circle_center.y + radius*(cos(theta_y_max)*a.y + sin(theta_y_max)*b.y);
     double y_min = circle_center.y + radius*(cos(theta_y_min)*a.y + sin(theta_y_min)*b.y);
-
-    y_max = ceil(y_max/grid_interval)*grid_interval;
-    y_min = floor(y_min/grid_interval)*grid_interval;
 
     // Check if the spot is past the visible edge of the star
     const double x_max = circle_center.x + radius*(cos(theta_y_max)*a.y + sin(theta_y_max)*b.y);
@@ -92,9 +89,13 @@ bounds BoundingShape::y_bounds() const {
 
 bounds BoundingShape::z_bounds(const double y) const {
 
+    if (radius == 0) {
+        return {0.0, 0.0};
+    }
     return z_bounds_edge(y);
 
-    if (true) {
+    if (is_on_edge) {
+        return z_bounds_edge(y);
         /*
         auto test = z_bounds_edge(y);
         if (test.lower != 0.0 && test.upper != 0) {
@@ -138,30 +139,54 @@ bounds BoundingShape::z_bounds(const double y) const {
         std::cout << std::endl;
         return test;
     }
+    else {
+        double ay = a.y;
+        double by = b.y;
 
-    double interior = a.y*a.y*radius*radius + b.y*b.y*radius*radius - circle_center.y*circle_center.y + 2.*circle_center.y*y - y*y;
-    interior = std::max(interior, 0.0);
+        if ((ay*ay + by*by) < 0.0) {
+            return {0.0, 0.0};
+        }
 
-    const double theta_z_max = 2. * atan2((-b.y*radius + sqrt(interior)),
-                                  (-a.y*radius + center.y - y));
-    const double theta_z_min = 2. * atan2((-b.y*radius - sqrt(interior)),
-                                  (-a.y*radius + center.y - y));
+        double alpha = acos(ay / sqrt(ay*ay + by*by));
+        double theta = asin((y-circle_center.y)/sqrt(ay*ay + by*by));
+        double theta1 = theta - alpha;
+        double theta2 = M_PI - theta - alpha;
 
-    //std::cout << (-b.y*radius + sqrt(interior))/(-a.y*radius + center.y - y) << " " << (b.y*radius + sqrt(interior))/(-a.y*radius + center.y - y) << std::endl;
+        double z1 = circle_center.z + radius*(sin(theta1)*a.z + cos(theta1)*b.z);
+        double z2 = circle_center.z + radius*(sin(theta2)*a.z + cos(theta2)*b.z);
 
-    double z_max = circle_center.z + radius*(cos(theta_z_max)*a.z + sin(theta_z_max)*b.z);
-    double z_min = circle_center.z + radius*(cos(theta_z_min)*a.z + sin(theta_z_min)*b.z);
+        /*
+        std::cout << circle_center.y << std::endl;
+        std::cout << radius << std::endl;
+        std::cout << a.y << std::endl;
+        std::cout << b.y << std::endl;
+        std::cout << y << std::endl;
 
-    double y1 = circle_center.y + radius*(cos(theta_z_max)*a.y + sin(theta_z_max)*b.y);
-    double y2 = circle_center.y + radius*(cos(theta_z_min)*a.y + sin(theta_z_min)*b.y);
+        std::cout << radius << std::endl;
+        std::cout << z1 << " " << circle_center.z << " " << z2 << std::endl;
+        exit(0);
+        */
 
-    /*
-    std::cout << y << " " << y1 << " " << y2 << std::endl;
-    std::cout << z_min << " " << z_max << std::endl;
-    std::cout << (-b.y*radius - sqrt(interior))/(-a.y*radius + center.y - y) << std::endl;
-    std::cout << std::endl;
-*/
-    return {z_min, z_max};
+        return {z1, z2};
+
+        // Wolfram code
+        /*
+        double interior = a.y*a.y*radius*radius + b.y*b.y*radius*radius - circle_center.y*circle_center.y + 2.*circle_center.y*y - y*y;
+        interior = std::max(interior, 0.0);
+
+        const double theta_z_max = 2. * atan2((-b.y*radius + sqrt(interior)),
+                                              (-a.y*radius + center.y - y));
+        const double theta_z_min = 2. * atan2((-b.y*radius - sqrt(interior)),
+                                              (-a.y*radius + center.y - y));
+
+        //std::cout << (-b.y*radius + sqrt(interior))/(-a.y*radius + center.y - y) << " " << (b.y*radius + sqrt(interior))/(-a.y*radius + center.y - y) << std::endl;
+
+        double z_max = circle_center.z + radius*(cos(theta_z_max)*a.z + sin(theta_z_max)*b.z);
+        double z_min = circle_center.z + radius*(cos(theta_z_min)*a.z + sin(theta_z_min)*b.z);
+
+        return {z_min, z_max};
+        */
+    }
 }
 
 
@@ -175,29 +200,23 @@ bool BoundingShape::on_spot(const double y, const double z) const {
         return false;
     }
     double x = sqrt(1-(y*y + z*z));
-    double distance_squared = (y-center.y)*(y-center.y) + (z-center.z)*(z-center.z) + (x-center.x)*(x-center.x);
+    double distance_squared = (y-circle_center.y)*(y-circle_center.y) + (z-circle_center.z)*(z-circle_center.z) + (x-circle_center.x)*(x-circle_center.x);
     return (distance_squared <= (radius*radius));
 }
 
 
 bounds BoundingShape::z_bounds_edge(const double y) const {
-
-    // Set both bounds to invalid values so we can detect if a spot was found
     double z_max = 2.0;
     double z_min = 2.0;
 
-    //double rhs = ((1 + circle_center.x*circle_center.x + circle_center.y*circle_center.y + circle_center.z*circle_center.z - radius*radius)/2.0 - y*circle_center.y);
-
-    for (double z = center.z+radius; z > center.z-radius; z-=grid_interval) {
-        //if (circle_center.x*sqrt(1-y*y-z*z) + z*circle_center.z >= rhs) {
+    for (double z = circle_center.z+radius; z >= circle_center.z; z-=grid_interval) {
         if (on_spot(y, z)) {
             z_max = z;
             break;
         }
     }
 
-    for (double z = center.z-radius; z < center.z+radius; z+=grid_interval) {
-        //if (circle_center.x*sqrt(1-y*y-z*z) + z*circle_center.z >= rhs) {
+    for (double z = circle_center.z-radius; z <= circle_center.z; z+=grid_interval) {
         if (on_spot(y, z)) {
             z_min = z;
             break;

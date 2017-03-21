@@ -32,7 +32,7 @@ public:
     Profile profile_quiet, profile_active;
     std::vector<double> integrated_ccf;
     std::vector<double> fit_result;
-    std::vector<double> image;
+    std::vector<float> image;
 
 private:
     double equatorial_velocity;

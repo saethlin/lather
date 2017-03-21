@@ -23,7 +23,6 @@ class Spot;
 class BoundingShape {
 public:
     BoundingShape(const Spot& spot, const double phase);
-    bool is_visible() const;
     bounds y_bounds() const;
     bounds z_bounds(const double y) const;
     bounds z_bounds_edge(const double y) const;
@@ -32,7 +31,7 @@ public:
 private:
     bool on_spot(const double y, const double z) const;
     Point center, circle_center, a, b;
-    double size, radius, grid_interval, time;
+    double radius, grid_interval;
     bool visible, is_on_edge;
 };
 

@@ -6,43 +6,45 @@
 
 
 int main() {
-    Simulation simulation("/home/ben/lather/config.cfg");
+    Simulation simulation("../config.cfg");
     double time = 0.0;
 
-    sf::RenderWindow window(sf::VideoMode(1000, 1000), "LATHER display");
+    sf::RenderWindow window(sf::VideoMode(1000, 1000), "LATHER display", sf::Style::Fullscreen);
     auto image = sf::Image();
     sf::Texture texture;
     texture.create(1000, 1000);
-
     sf::Sprite sprite(texture);
-
-    std::vector<uint8_t> pixels(1000*1000*4);
+    sprite.move((1920-1000)/2., (1080-1000)/2.);
 
     sf::Event event;
+
     while (window.isOpen()) {
+
+        auto start = std::chrono::high_resolution_clock::now();
+
         while (window.pollEvent(event)) {
             if (event.type == sf::Event::Closed) {
                 window.close();
             }
+            else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::Escape) {
+                window.close();
+            }
         }
 
-        auto times = std::vector<double>{time};
-        simulation.observe_rv(times, 5000.0, 5001.0);
-        auto data = simulation.draw_pixmap(time);
-        for (int i = 0; i < data.size(); i++) {
-            pixels[i] = data[i];
-            pixels[i + 1] = data[i];
-            pixels[i + 2] = data[i];
-            pixels[i + 3] = 255;
-        }
-
+        simulation.observe_rv({time}, 5000e-10, 5001e-10);
+        auto pixels = simulation.draw_rgba(time);
         texture.update(pixels.data());
+
         window.clear();
         window.draw(sprite);
         window.display();
 
-        time += 0.02;
-        std::this_thread::sleep_for(std::chrono::milliseconds(15));
+        time += 0.01;
+
+        auto end = std::chrono::high_resolution_clock::now();
+        auto duration = end-start;
+        std::chrono::milliseconds framerate(10);
+        std::this_thread::sleep_for(framerate-duration);
     }
 
     return 0;

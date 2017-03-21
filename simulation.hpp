@@ -25,7 +25,7 @@ public:
     std::vector<double> observe_rv(const std::vector<double>& time, const double wavelength_min, const double wavelength_max);
     std::vector<double> observe_flux(const std::vector<double>& time, const double wavelength_min, const double wavelength_max);
     void draw(const double time, const int i) const;
-    std::vector<uint8_t> draw_pixmap(const double time) const;
+    std::vector<uint8_t> draw_rgba(const double time) const;
 
 private:
     void check_fill_factor(double time);
