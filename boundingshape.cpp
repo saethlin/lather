@@ -4,15 +4,17 @@
 BoundingShape::BoundingShape(const Spot& spot, const double time) {
     grid_interval = spot.star->grid_interval;
     radius = spot.radius;
+    max_radius = radius;
 
-    const double lifetime = spot.time_disappear-spot.time_appear;
-    const double growth_time = 0.1*lifetime;
+    if (spot.mortal) {
+        const double lifetime = spot.time_disappear - spot.time_appear;
+        const double growth_time = 0.1 * lifetime;
 
-    if (fabs(time-spot.time_appear) < growth_time) {
-        radius *= fabs(time-spot.time_appear)/growth_time;
-    }
-    else if (fabs(time-spot.time_disappear) < growth_time) {
-        radius *= fabs(time-spot.time_disappear)/growth_time;
+        if (fabs(time - spot.time_appear) < growth_time) {
+            radius *= fabs(time - spot.time_appear) / growth_time;
+        } else if (fabs(time - spot.time_disappear) < growth_time) {
+            radius *= fabs(time - spot.time_disappear) / growth_time;
+        }
     }
 
     const double phase = fmod(time, spot.star->period) / spot.star->period * 2 * M_PI;
@@ -209,14 +211,14 @@ bounds BoundingShape::z_bounds_edge(const double y) const {
     double z_max = 2.0;
     double z_min = 2.0;
 
-    for (double z = circle_center.z+radius; z >= circle_center.z; z-=grid_interval) {
+    for (double z = center.z+radius; z > center.z-radius; z-=grid_interval) {
         if (on_spot(y, z)) {
             z_max = z;
             break;
         }
     }
 
-    for (double z = circle_center.z-radius; z <= circle_center.z; z+=grid_interval) {
+    for (double z = center.z-radius; z < center.z+radius; z+=grid_interval) {
         if (on_spot(y, z)) {
             z_min = z;
             break;
@@ -241,4 +243,14 @@ bounds BoundingShape::z_bounds_edge2(const double y) const {
     const double z_min = (-b+sqrt(b*b-4*a*c))/(2.0*a);
     const double z_max = (-b-sqrt(b*b-4*a*c))/(2.0*a);
     return {z_min, z_max};
+}
+
+
+bool BoundingShape::collides_with(const BoundingShape other) const {
+    double distance = sqrt(
+            std::pow(center.x-other.center.x, 2) +
+            std::pow(center.y-other.center.y, 2) +
+            std::pow(center.z-other.center.z, 2)
+    );
+    return distance < (max_radius+other.max_radius);
 }

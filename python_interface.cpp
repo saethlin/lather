@@ -1,4 +1,3 @@
-
 #include <exception>
 #include <stdio.h>
 #include <sstream>
@@ -6,12 +5,13 @@
 #include <stdbool.h>
 #include <Python.h>
 #include <numpy/arrayobject.h>
+#include <memory>
 #include "simulation.hpp"
 
 
 typedef struct {
     PyObject_HEAD
-    Simulation CppSimulation;
+    std::unique_ptr<Simulation> CppSimulation;
 } PySimulation;
 
 
@@ -21,12 +21,12 @@ static int PySimulation_init(PySimulation* self, PyObject* args, PyObject* kwarg
 
     try {
         PyArg_ParseTupleAndKeywords(args, kwargs, "s", kwdlist2, &filename);
-        self->CppSimulation = Simulation(filename);
+        self->CppSimulation = std::make_unique<Simulation>(filename);
         return 0;
     }
     catch (std::exception& e) {
         PyErr_Clear();
-        self->CppSimulation = Simulation();
+        self->CppSimulation = std::make_unique<Simulation>();
         return 0;
     }
 }
@@ -43,7 +43,7 @@ static PyObject* PySimulation_set_star(PySimulation* self, PyObject* args, PyObj
     }
 
     // Set the C++ simulation's star
-    self->CppSimulation.set_star(grid_size, radius, period, inclination, temperature, spotTempDiff, limbLinear, limbQuadratic);
+    self->CppSimulation->set_star(grid_size, radius, period, inclination, temperature, spotTempDiff, limbLinear, limbQuadratic);
 
     Py_RETURN_NONE;
 }
@@ -59,14 +59,14 @@ static PyObject* PySimulation_add_spot(PySimulation* self, PyObject* args, PyObj
         return NULL;
     }
 
-    self->CppSimulation.add_spot(latitude, longitude, size, plage);
+    self->CppSimulation->add_spot(latitude, longitude, size, plage);
 
     Py_RETURN_NONE;
 }
 
 
 static PyObject* PySimulation_clear_spots(PySimulation* self) {
-    self->CppSimulation.clear_spots();
+    self->CppSimulation->clear_spots();
     Py_RETURN_NONE;
 }
 
@@ -87,7 +87,7 @@ static PyObject* PySimulation_observe_rv(PySimulation* self, PyObject *args, PyO
     double* data = (double*)PyArray_DATA(timeArg);
     std::vector<double> time(data, data+dims[0]);
 
-    auto rv = self->CppSimulation.observe_rv(time, wavelength_min, wavelength_max);
+    auto rv = self->CppSimulation->observe_rv(time, wavelength_min, wavelength_max);
 
     // Copy std::vector outputs into a dict of numpy arrays
     PyObject* output_rv = PyArray_SimpleNew(1, dims, NPY_DOUBLE);
@@ -116,7 +116,7 @@ static PyObject* PySimulation_observe_flux(PySimulation* self, PyObject *args, P
     double* data = (double*)PyArray_DATA(timeArg);
     std::vector<double> time(data, data+dims[0]);
 
-    auto flux = self->CppSimulation.observe_flux(time, wavelength_min, wavelength_max);
+    auto flux = self->CppSimulation->observe_flux(time, wavelength_min, wavelength_max);
 
     // Copy std::vector outputs into a dict of numpy arrays
     PyObject* output_flux = PyArray_SimpleNew(1, dims, NPY_DOUBLE);

@@ -6,10 +6,11 @@
 
 
 int main() {
-    Simulation simulation("../config.cfg");
+    Simulation simulation("/home/ben/lather/config.cfg");
     double time = 0.0;
 
     sf::RenderWindow window(sf::VideoMode(1000, 1000), "LATHER display", sf::Style::Fullscreen);
+    window.setVerticalSyncEnabled(true);
     auto image = sf::Image();
     sf::Texture texture;
     texture.create(1000, 1000);
@@ -31,7 +32,6 @@ int main() {
             }
         }
 
-        simulation.observe_rv({time}, 5000e-10, 5001e-10);
         auto pixels = simulation.draw_rgba(time);
         texture.update(pixels.data());
 
@@ -39,11 +39,11 @@ int main() {
         window.draw(sprite);
         window.display();
 
-        time += 0.01;
+        time += 0.02;
 
         auto end = std::chrono::high_resolution_clock::now();
         auto duration = end-start;
-        std::chrono::milliseconds framerate(10);
+        std::chrono::milliseconds framerate(33);
         std::this_thread::sleep_for(framerate-duration);
     }
 

@@ -1,12 +1,13 @@
 #include "spot.hpp"
 
 
-Spot::Spot(Star* star, const double latitude, const double longitude, const double fillfactor, const bool plage) {
+Spot::Spot(Star* star, const double latitude, const double longitude, const double fillfactor, const bool plage, const bool mortal) {
     this->latitude = latitude * M_PI/180.0;
     this->longitude = longitude * M_PI/180.0;
     radius = sqrt(2*fillfactor);
     this->star = star;
     this->plage = plage;
+    this->mortal = mortal;
     if (plage) {
         this->temperature = star->temperature + star->spot_temp_diff;
     }
@@ -14,12 +15,14 @@ Spot::Spot(Star* star, const double latitude, const double longitude, const doub
         this->temperature = star->temperature - star->spot_temp_diff;
     }
 
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::normal_distribution<> d(0, 5.0);
+    if (mortal) {
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::normal_distribution<> d(0, 5.0);
 
-    time_appear = 0.0;
-    time_disappear = 15.0 + d(gen);
+        time_appear = 0.0;
+        time_disappear = 15.0 + d(gen);
+    }
 }
 
 
@@ -57,5 +60,13 @@ std::vector<double> Spot::get_ccf(const double time) const {
 
 
 bool Spot::alive(const double time) const {
+    if (!mortal) return true;
     return time >= time_appear && time <= time_disappear;
+}
+
+
+bool Spot::collides_with(const Spot& other) const {
+    BoundingShape bounds(*this, 0);
+    BoundingShape other_bounds(other, 0);
+    return bounds.collides_with(other_bounds);
 }

@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.6)
 project(lather)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_COMPILER /usr/bin/clang++)
 
 set(SOURCE_FILES
@@ -20,7 +20,7 @@ set(SOURCE_FILES
 
 link_libraries(gsl gslcblas Magick++ sfml-graphics sfml-window sfml-system)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-omit-frame-pointer -march=native -O3 -Wall -fopenmp=libgomp")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-omit-frame-pointer -march=native -O3 -Wall -mavx")
 
 set(CMAKE_BUILD_TYPE Release)
 

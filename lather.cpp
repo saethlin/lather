@@ -3,18 +3,17 @@
 
 
 int main() {
-
     clock_t begin = clock();
 
-    Simulation simulation("/home/ben/lather/config.cfg");
+    Simulation simulation("/home/ben/research/lather_experiments/sun.cfg");
 
-    std::vector<double> time(10000);
+    std::vector<double> time(100);
     std::iota(time.begin(), time.end(), 0);
-    for (auto & val : time) {
+    for (auto& val : time) {
         val = val/(double)time.size() * 100.0;
     }
 
-    auto rv = simulation.observe_rv(time, 5000e-10, 5001e-10);
+    auto rv = simulation.observe_rv(time, 4000e-10, 5000e-10);
 
     //for (const auto& val : rv) std::cout << val << '\n';
 

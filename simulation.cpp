@@ -27,6 +27,8 @@ Simulation::Simulation(const char* filename) {
 
     set_star(radius, period, inclination, temperature, spot_temp_diff, limbLinear, limbQuadratic, grid_size);
 
+    dynamic_fill_factor = reader.GetReal("star", "fillfactor", 0.0);
+
     for (const auto& section : reader.GetSections()) {
         if (section.substr(0, 4) == "spot") {
             const double latitude = reader.GetReal(section, "latitude", 0.0);
@@ -34,11 +36,9 @@ Simulation::Simulation(const char* filename) {
             const double size = reader.GetReal(section, "size", 0.1);
             const bool plage = reader.GetBoolean(section, "plage", false);
 
-            add_spot(latitude, longitude, size, plage);
+            add_spot(latitude, longitude, size, plage, false);
         }
     }
-
-    dynamic_fill_factor = reader.GetReal("star", "fillfactor", 0.0);
 }
 
 
@@ -48,8 +48,8 @@ void Simulation::set_star(double radius, double period, double inclination, doub
 }
 
 
-void Simulation::add_spot(double latitude, double longitude, double fillfactor, bool plage) {
-    spots.emplace_back(&star, latitude, longitude, fillfactor, plage);
+void Simulation::add_spot(double latitude, double longitude, double fillfactor, bool plage, bool mortal) {
+    spots.emplace_back(&star, latitude, longitude, fillfactor, plage, mortal);
 }
 
 
@@ -61,22 +61,34 @@ void Simulation::check_fill_factor(double time) {
     double current_fill_factor = 0.0;
     for (const auto& spot : spots) {
         if (spot.alive(time)) {
-            current_fill_factor += spot.radius;
+            current_fill_factor += (spot.radius*spot.radius)/2.0;
         }
     }
 
-    std::mt19937 gen(spots.size());
+    std::mt19937 gen(0);
     std::lognormal_distribution<> fill_dist(0.5, 4.0);
     std::uniform_real_distribution<> lat_dist(-30.0, 30.0);
     std::uniform_real_distribution<> long_dist(0.0, 360.0);
 
     while (current_fill_factor < dynamic_fill_factor) {
         double new_fill_factor = fill_dist(gen)*9.4e-6;
-        if (new_fill_factor < 0.001) {
-            auto new_spot = Spot(&star, lat_dist(gen), long_dist(gen), new_fill_factor, false);
-            new_spot.time_disappear += time;
-            new_spot.time_appear += time;
-            current_fill_factor += new_spot.radius;
+        while (new_fill_factor > 0.001) {
+            new_fill_factor = fill_dist(gen)*9.4e-6;
+        }
+
+        Spot new_spot(&star, lat_dist(gen), long_dist(gen), new_fill_factor, false, true);
+        new_spot.time_disappear += time;
+        new_spot.time_appear += time;
+
+        bool collides = false;
+        for (const auto& spot: spots) {
+            if (new_spot.collides_with(spot)) {
+                collides = true;
+                break;
+            }
+        }
+        if (! collides) {
+            current_fill_factor += (new_spot.radius*new_spot.radius)/2.0;
             spots.push_back(new_spot);
         }
     }
@@ -90,12 +102,14 @@ std::vector<double> Simulation::observe_rv(const std::vector<double>& time, cons
 
     auto fit_guess = star.fit_result;
 
-    for (const auto& t : time) check_fill_factor(t);
+    // TODO WHY DID I DO THIS
+    //for (const auto& t : time) check_fill_factor(t);
 
     double intensity = planck_integral((star.temperature-star.spot_temp_diff), wavelength_min, wavelength_max) / star.intensity;
     for (auto &spot : spots) spot.intensity = intensity;
 
     for (auto t = 0; t < time.size(); t++) {
+        check_fill_factor(time[t]);
         std::vector<double> spot_profile(star.profile_active.size());
         for (const auto &spot : spots) {
             if (spot.alive(time[t])) {
@@ -174,7 +188,13 @@ void Simulation::draw(const double time, const int i) const {
 }
 
 
-std::vector<uint8_t> Simulation::draw_rgba(const double time) const {
+std::vector<uint8_t> Simulation::draw_rgba(const double time) {
+    check_fill_factor(time);
+    star.intensity = planck_integral(star.temperature, 4000e-10, 7000e-10);
+    for (auto &spot : spots) {
+        spot.intensity = planck_integral(spot.temperature, 4000e-10, 7000e-10) / star.intensity;
+    }
+
     std::vector<float> image = star.image;
     for (const auto& spot : spots) {
         if (spot.alive(time)) {

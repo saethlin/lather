@@ -1,4 +1,7 @@
 from setuptools import setup, Extension
+import os
+
+os.environ['CC'] = 'g++'
 
 lather = Extension('lather',
                    sources=['python_interface.cpp', 'simulation.cpp', 'star.cpp', 'spot.cpp', 'profile.cpp',
@@ -7,7 +10,7 @@ lather = Extension('lather',
                    include_dirs=['/usr/local/include', '/usr/local/include/gsl'],
                    library_dirs=['/usr/local/lib'],
                    libraries=['gsl', 'gslcblas', 'Magick++'],
-                   extra_compile_args=['-std=c++11', '-O3'])
+                   extra_compile_args=['-std=c++14', '-O3'])
 
 setup(name='lather',
       version='0.0.1',
