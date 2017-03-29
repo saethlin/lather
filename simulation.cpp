@@ -82,9 +82,11 @@ void Simulation::check_fill_factor(double time) {
 
         bool collides = false;
         for (const auto& spot: spots) {
-            if (new_spot.collides_with(spot)) {
-                collides = true;
-                break;
+            if (spot.alive(new_spot.time_disappear) || spot.alive(new_spot.time_appear)) {
+                if (new_spot.collides_with(spot)) {
+                    collides = true;
+                    break;
+                }
             }
         }
         if (! collides) {
