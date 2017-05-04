@@ -88,6 +88,10 @@ void Simulation::check_fill_factor(double time) {
                     break;
                 }
             }
+            if (spot.longitude == new_spot.longitude || spot.latitude == new_spot.latitude) {
+                collides = true;
+                break;
+            }
         }
         if (! collides) {
             current_fill_factor += (new_spot.radius*new_spot.radius)/2.0;

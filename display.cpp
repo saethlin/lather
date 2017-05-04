@@ -9,7 +9,7 @@ int main() {
     Simulation simulation("/home/ben/lather/config.cfg");
     double time = 0.0;
 
-    sf::RenderWindow window(sf::VideoMode(1000, 1000), "LATHER display", sf::Style::Fullscreen);
+    sf::RenderWindow window(sf::VideoMode(1920, 1080), "LATHER display", sf::Style::Fullscreen);
     window.setVerticalSyncEnabled(true);
     auto image = sf::Image();
     sf::Texture texture;
@@ -45,6 +45,8 @@ int main() {
         auto duration = end-start;
         std::chrono::milliseconds framerate(33);
         std::this_thread::sleep_for(framerate-duration);
+
+        std::vector<std::vector<int> >(10, std::vector<int>(10));
     }
 
     return 0;

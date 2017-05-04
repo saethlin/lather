@@ -89,109 +89,6 @@ bounds BoundingShape::y_bounds() const {
 }
 
 
-bounds BoundingShape::z_bounds(const double y) const {
-
-    if (radius == 0) {
-        return {0.0, 0.0};
-    }
-    return z_bounds_edge(y);
-
-    if (is_on_edge) {
-        return z_bounds_edge(y);
-        /*
-        auto test = z_bounds_edge(y);
-        if (test.lower != 0.0 && test.upper != 0) {
-            auto new_test = z_bounds_edge2(y);
-            std::cout << "y = " << y << std::endl;
-            std::cout << "center.x = " << circle_center.x << std::endl;
-            std::cout << "center.y = " << circle_center.y << std::endl;
-            std::cout << "center.z = " << circle_center.z << std::endl;
-            std::cout << "depth = " << circle_center.x/center.x << std::endl;
-            std::cout << "old " << test.lower << " " << test.upper << std::endl;
-            std::cout << "new " << new_test.lower << " " << new_test.upper << std::endl;
-            double rhs = ((1 + circle_center.x*circle_center.x + circle_center.y*circle_center.y + circle_center.z*circle_center.z - radius*radius)/2.0 - y*circle_center.y);
-            //std::cout << "verification " << rhs - circle_center.z*new_test.lower << " " << rhs - circle_center.z*new_test.upper << std::endl;
-
-            double max = -2.0;
-            double min = 2.0;
-            for (double z = -1.0; z <= 1.0; z += grid_interval) {
-                if (circle_center.x*sqrt(1-y*y-z*z) + z*circle_center.z >= rhs) {
-                    if (z > max) {
-                        max = z;
-                    }
-                    if (z < min) {
-                        min = z;
-                    }
-                }
-            }
-
-            std::cout << "min and max " << min << " " << max << std::endl;
-
-            double R = ((1 + circle_center.x*circle_center.x + circle_center.y*circle_center.y + circle_center.z*circle_center.z - radius*radius)/2.0 - y*circle_center.y);
-            std::cout << "R/z_c = " << R/circle_center.z << std::endl;
-            exit(0);
-        }
-        */
-        auto test = z_bounds_edge(y);
-        std::cout << test.upper << " " << test.lower << std::endl;
-        auto test2 = z_bounds_edge2(y);
-        double R = ((1 + circle_center.x*circle_center.x + circle_center.y*circle_center.y + circle_center.z*circle_center.z - radius*radius)/2.0 - y*circle_center.y);
-        std::cout << test2.lower << " " << test2.upper << std::endl;
-        std::cout << R/circle_center.z << std::endl;
-        std::cout << std::endl;
-        return test;
-    }
-    else {
-        double ay = a.y;
-        double by = b.y;
-
-        if ((ay*ay + by*by) < 0.0) {
-            return {0.0, 0.0};
-        }
-
-        double alpha = acos(ay / sqrt(ay*ay + by*by));
-        double theta = asin((y-circle_center.y)/sqrt(ay*ay + by*by));
-        double theta1 = theta - alpha;
-        double theta2 = M_PI - theta - alpha;
-
-        double z1 = circle_center.z + radius*(sin(theta1)*a.z + cos(theta1)*b.z);
-        double z2 = circle_center.z + radius*(sin(theta2)*a.z + cos(theta2)*b.z);
-
-        /*
-        std::cout << circle_center.y << std::endl;
-        std::cout << radius << std::endl;
-        std::cout << a.y << std::endl;
-        std::cout << b.y << std::endl;
-        std::cout << y << std::endl;
-
-        std::cout << radius << std::endl;
-        std::cout << z1 << " " << circle_center.z << " " << z2 << std::endl;
-        exit(0);
-        */
-
-        return {z1, z2};
-
-        // Wolfram code
-        /*
-        double interior = a.y*a.y*radius*radius + b.y*b.y*radius*radius - circle_center.y*circle_center.y + 2.*circle_center.y*y - y*y;
-        interior = std::max(interior, 0.0);
-
-        const double theta_z_max = 2. * atan2((-b.y*radius + sqrt(interior)),
-                                              (-a.y*radius + center.y - y));
-        const double theta_z_min = 2. * atan2((-b.y*radius - sqrt(interior)),
-                                              (-a.y*radius + center.y - y));
-
-        //std::cout << (-b.y*radius + sqrt(interior))/(-a.y*radius + center.y - y) << " " << (b.y*radius + sqrt(interior))/(-a.y*radius + center.y - y) << std::endl;
-
-        double z_max = circle_center.z + radius*(cos(theta_z_max)*a.z + sin(theta_z_max)*b.z);
-        double z_min = circle_center.z + radius*(cos(theta_z_min)*a.z + sin(theta_z_min)*b.z);
-
-        return {z_min, z_max};
-        */
-    }
-}
-
-
 bool on_star(const double y, const double z) {
     return (y*y + z*z) <= 1;
 }
@@ -207,7 +104,7 @@ bool BoundingShape::on_spot(const double y, const double z) const {
 }
 
 
-bounds BoundingShape::z_bounds_edge(const double y) const {
+bounds BoundingShape::z_bounds(const double y) const {
     double z_max = 2.0;
     double z_min = 2.0;
 
