@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 #include <math.h>
+#include <gsl/gsl_integration.h>
 #include <Magick++.h>
 
 
@@ -35,8 +36,9 @@ public:
     std::vector<float> image;
 
 private:
+    double Star::limb_path_func(const double v, void* args) const;
     double equatorial_velocity;
-
+    double diff_a, diff_b, diff_c;
 };
 
 

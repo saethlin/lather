@@ -29,7 +29,7 @@ Spot::Spot(Star* star, const double latitude, const double longitude, const doub
 double Spot::get_flux(const double time) const {
     double limb_integral = 0.0;
     const auto bounds = BoundingShape(*this, time);
-    const auto y_bounds = bounds.y_bounds();
+    const auto y_bounds = bounds.v_bounds();
     for (auto y = y_bounds.lower; y < y_bounds.upper; y += star->grid_interval) {
         const auto z_bounds = bounds.z_bounds(y);
         limb_integral += star->get_limb_integral(z_bounds.lower, z_bounds.upper, y);
@@ -41,7 +41,7 @@ double Spot::get_flux(const double time) const {
 std::vector<double> Spot::get_ccf(const double time) const {
     std::vector<double> profile(star->profile_active.size());
     const auto bounds = BoundingShape(*this, time);
-    const auto y_bounds = bounds.y_bounds();
+    const auto y_bounds = bounds.v_bounds();
     for (double y = y_bounds.lower; y < y_bounds.upper; y += star->grid_interval) {
 
         const auto& ccf_quiet_shifted = star->quiet_profile(y);

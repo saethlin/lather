@@ -23,7 +23,7 @@ class Spot;
 class BoundingShape {
 public:
     BoundingShape(const Spot& spot, const double phase);
-    bounds y_bounds() const;
+    bounds v_bounds() const;
     bounds z_bounds(const double y) const;
     bounds z_bounds_edge(const double y) const;
     bounds z_bounds_edge2(const double y) const;

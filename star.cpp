@@ -42,11 +42,18 @@ Star::Star(const double radius, const double period, const double inclination, c
 
     integrated_ccf = std::vector<double>(profile_quiet.size());
 
-    for (double y = -1.0; y <= 1.0; y += grid_interval) {
+    double z_bound = 0.0;
+    for (int i = 0; i < gridSize; i++) {
+        double v = (-1 + i*grid_interval) * edge_velocity;
 
-        auto& ccfShifted = quiet_profile(y);
-        double z_bound = sqrt(1 - y*y);
-        double limb_integral = get_limb_integral(-z_bound, z_bound, y);
+        double y = v/(edge_velocity*(diff_a + diff_b*std::pow(z_bound, 2) + diff_c*std::pow(z_bound, 4)));
+        while (z_bound*z_bound + y*y < 1) {
+            z_bound += grid_interval;
+            y = v/(edge_velocity*(diff_a + diff_b*std::pow(z_bound, 2) + diff_c*std::pow(z_bound, 4)));
+        }
+
+        auto& ccfShifted = profile_quiet.shift(v);
+        double limb_integral = get_limb_integral(-z_bound, z_bound, v);
 
         for (auto k = 0; k < profile_quiet.size(); k++) {
             integrated_ccf[k] += ccfShifted[k] * limb_integral;
@@ -102,17 +109,28 @@ std::vector<double>& Star::active_profile(const double y) const {
 }
 
 
-double Star::get_limb_integral(const double z_lower, const double z_upper, const double y) const {
-    if (z_lower == z_upper) return 0;
+double Star::limb_path_func(const double v, void* args) const {
+    const double z = *(double*)args;
+    const double z_sq = z*z;
+    return sqrt(1 + (4*v*v*z_sq * (diff_b + 2*diff_c*z_sq) * (diff_b + 2*diff_c*z_sq))
+                    /(equatorial_velocity*equatorial_velocity * std::pow(diff_a + z_sq*(diff_b + diff_c*z_sq), 4)));
+}
 
-    double x_upper = sqrt(1 - std::min(z_upper*z_upper + y*y, 1.0));
-    double x_lower = sqrt(1 - std::min(z_lower*z_lower + y*y, 1.0));
 
-    double limb_integral = 1./6. * (z_upper * (3*limb_linear*(x_upper-2) + 2*(limb_quadratic*(3*x_upper + 3*y*y + z_upper*z_upper - 6) + 3 )) -
-            3 * (y*y - 1)*(limb_linear + 2*limb_quadratic)*atan(z_upper/x_upper));
+double Star::get_limb_integral(const double z_lower, const double z_upper, const double v) const {
+    gsl_integration_workspace* w = gsl_integration_workspace_alloc(1000);
 
-    limb_integral -= 1./6. * (z_lower * (3*limb_linear*(x_lower-2) + 2*(limb_quadratic*(3*x_lower + 3*y*y + z_lower*z_lower - 6) + 3 )) -
-                                    3 * (y*y - 1)*(limb_linear + 2*limb_quadratic)*atan(z_lower/x_lower));
+    double result, error;
 
-    return limb_integral;
+    gsl_function F;
+    F.function = &Star::limb_path_func;
+    F.params = &temperature;
+
+    gsl_integration_qags(&F, z_lower, z_upper, 0, 1e-7, 1000,
+                         w, &result, &error);
+
+    gsl_integration_workspace_free(w);
+
+    return result;
+
 }

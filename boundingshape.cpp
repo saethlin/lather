@@ -51,7 +51,7 @@ BoundingShape::BoundingShape(const Spot& spot, const double time) {
 }
 
 
-bounds BoundingShape::y_bounds() const {
+bounds BoundingShape::v_bounds() const {
 
     if (not visible) {
         return {0.0, 0.0};
@@ -128,17 +128,6 @@ bounds BoundingShape::z_bounds(const double y) const {
         z_max = 0.0;
     }
 
-    return {z_min, z_max};
-}
-
-
-bounds BoundingShape::z_bounds_edge2(const double y) const {
-    const double a = circle_center.z*circle_center.z + circle_center.x*circle_center.x;
-    const double b = -2.0*circle_center.z*((1 + circle_center.x*circle_center.x + circle_center.y*circle_center.y + circle_center.z*circle_center.z - radius*radius)/2.0 - y*circle_center.y);
-    const double c = std::pow((1 + circle_center.x*circle_center.x + circle_center.y*circle_center.y + circle_center.z*circle_center.z - radius*radius)/2.0 - y*circle_center.y, 2) *  - circle_center.x*circle_center.x *(1 - y*y) ;
-
-    const double z_min = (-b+sqrt(b*b-4*a*c))/(2.0*a);
-    const double z_max = (-b-sqrt(b*b-4*a*c))/(2.0*a);
     return {z_min, z_max};
 }
 

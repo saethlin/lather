@@ -167,7 +167,7 @@ void Simulation::draw(const double time, const int i) const {
         if (spot.alive(time)) {
 
             const auto bounds = BoundingShape(spot, time);
-            auto y_bounds = bounds.y_bounds();
+            auto y_bounds = bounds.v_bounds();
             y_bounds = {round(y_bounds.upper / star.grid_interval) * star.grid_interval,
                         round(y_bounds.lower / star.grid_interval) * star.grid_interval};
             for (auto y = y_bounds.lower; y < y_bounds.upper; y += star.grid_interval) {
@@ -206,7 +206,7 @@ std::vector<uint8_t> Simulation::draw_rgba(const double time) {
         if (spot.alive(time)) {
 
             const auto bounds = BoundingShape(spot, time);
-            auto y_bounds = bounds.y_bounds();
+            auto y_bounds = bounds.v_bounds();
             y_bounds = {round(y_bounds.upper / star.grid_interval) * star.grid_interval,
                         round(y_bounds.lower / star.grid_interval) * star.grid_interval};
             for (auto y = y_bounds.lower; y < y_bounds.upper; y += star.grid_interval) {
