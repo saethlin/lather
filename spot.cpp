@@ -41,14 +41,14 @@ double Spot::get_flux(const double time) const {
 std::vector<double> Spot::get_ccf(const double time) const {
     std::vector<double> profile(star->profile_active.size());
     const auto bounds = BoundingShape(*this, time);
-    const auto y_bounds = bounds.v_bounds();
-    for (double y = y_bounds.lower; y < y_bounds.upper; y += star->grid_interval) {
+    const auto v_bounds = bounds.v_bounds();
+    for (double v = v_bounds.lower; v < v_bounds.upper; v += star->velocity_interval) {
 
-        const auto& ccf_quiet_shifted = star->quiet_profile(y);
-        const auto& ccf_active_shifted = star->active_profile(y);
+        const auto& ccf_quiet_shifted = star->profile_quiet.shift(v);
+        const auto& ccf_active_shifted = star->profile_active.shift(v);
 
-        const auto z_bounds = bounds.z_bounds(y);
-        const double limb_integral = star->get_limb_integral(z_bounds.lower, z_bounds.upper, y);
+        const auto z_bounds = bounds.z_bounds(v);
+        const double limb_integral = star->get_limb_integral(z_bounds.lower, z_bounds.upper, v);
 
         for (auto i = 0; i < ccf_quiet_shifted.size(); i++) {
             profile[i] += (ccf_quiet_shifted[i] - intensity * ccf_active_shifted[i]) * limb_integral;

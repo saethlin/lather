@@ -20,7 +20,7 @@ set(SOURCE_FILES
 
 link_libraries(gsl gslcblas Magick++ sfml-graphics sfml-window sfml-system)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -fno-omit-frame-pointer -march=native -O3 -Wall -mavx")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -fno-omit-frame-pointer -march=native -O3 -static -flto -fno-math-errno")
 
 set(CMAKE_BUILD_TYPE Release)
 

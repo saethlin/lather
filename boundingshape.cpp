@@ -5,6 +5,7 @@ BoundingShape::BoundingShape(const Spot& spot, const double time) {
     grid_interval = spot.star->grid_interval;
     radius = spot.radius;
     max_radius = radius;
+    star = spot.star;
 
     if (spot.mortal) {
         const double lifetime = spot.time_disappear - spot.time_appear;
@@ -75,17 +76,22 @@ bounds BoundingShape::v_bounds() const {
         return {0.0, 0.0};
     }
 
+    double z_max = circle_center.z + radius*(cos(theta_y_max)*a.y + sin(theta_y_max)*b.y);
+    double z_min = circle_center.z + radius*(cos(theta_y_min)*a.y + sin(theta_y_min)*b.y);
+
     // Spot wraps around the right edge of the star
     if (x_max < 0.0) {
-        y_max = 1.0;
+        y_max = 0.0;
+        z_max = 0.0;
     }
 
     // Spot wraps around the left edge of the star
     if (x_min < 0.0) {
         y_min = -1.0;
+        z_min = 0.0;
     }
 
-    return {y_min, y_max};
+    return {star->get_velocity(y_min, z_min), star->get_velocity(y_max, z_max)};
 }
 
 

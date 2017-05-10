@@ -4,6 +4,7 @@
 
 #include "point.hpp"
 #include "spot.hpp"
+#include "star.hpp"
 #include <cmath>
 #include <iostream>
 
@@ -34,6 +35,7 @@ private:
     Point center, circle_center, a, b;
     double radius, grid_interval, max_radius;
     bool visible, is_on_edge;
+    Star* star;
 };
 
 

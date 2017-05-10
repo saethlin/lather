@@ -16,6 +16,7 @@ Star::Star(const double radius, const double period, const double inclination, c
     this->limb_linear = limb_linear;
     this->limb_quadratic = limb_quadratic;
     this->grid_interval = 2.0 / gridSize;
+    this->velocity_interval = 2.0*equatorial_velocity / gridSize;
 
     // Setup for profiles
     std::vector<double> rv;
@@ -99,16 +100,6 @@ double Star::limb_brightness(const double r_cos) const {
 }
 
 
-std::vector<double>& Star::quiet_profile(const double y) const {
-    return profile_quiet.shift(y * equatorial_velocity);
-}
-
-
-std::vector<double>& Star::active_profile(const double y) const {
-    return profile_active.shift(y * equatorial_velocity);
-}
-
-
 double Star::limb_path_func(const double v, void* args) const {
     const double z = *(double*)args;
     const double z_sq = z*z;
@@ -133,4 +124,10 @@ double Star::get_limb_integral(const double z_lower, const double z_upper, const
 
     return result;
 
+}
+
+
+double Star::get_velocity(const double y, const double z) const {
+    const double z_sq = z*z;
+    return y * equatorial_velocity * (diff_a - diff_b*z_sq - diff_c*z_sq*z_sq);
 }
