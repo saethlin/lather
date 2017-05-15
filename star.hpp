@@ -36,7 +36,6 @@ public:
     std::vector<double> fit_result;
     std::vector<float> image;
 
-private:
     double equatorial_velocity;
     double diff_a, diff_b, diff_c;
 };

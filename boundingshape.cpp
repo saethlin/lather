@@ -69,15 +69,16 @@ bounds BoundingShape::v_bounds() const {
     double y_min = circle_center.y + radius*(cos(theta_y_min)*a.y + sin(theta_y_min)*b.y);
 
     // Check if the spot is past the visible edge of the star
-    const double x_max = circle_center.x + radius*(cos(theta_y_max)*a.y + sin(theta_y_max)*b.y);
-    const double x_min = circle_center.x + radius*(cos(theta_y_min)*a.y + sin(theta_y_min)*b.y);
+    const double x_max = circle_center.x + radius*(cos(theta_y_max)*a.x + sin(theta_y_max)*b.x);
+    const double x_min = circle_center.x + radius*(cos(theta_y_min)*a.x + sin(theta_y_min)*b.x);
 
     if (x_min < 0 && x_max < 0) {
         return {0.0, 0.0};
     }
 
-    double z_max = circle_center.z + radius*(cos(theta_y_max)*a.y + sin(theta_y_max)*b.y);
-    double z_min = circle_center.z + radius*(cos(theta_y_min)*a.y + sin(theta_y_min)*b.y);
+    // Need y and z coordinates to find the velocity bounds
+    double z_max = circle_center.z + radius*(cos(theta_y_max)*a.z + sin(theta_y_max)*b.z);
+    double z_min = circle_center.z + radius*(cos(theta_y_min)*a.z + sin(theta_y_min)*b.z);
 
     // Spot wraps around the right edge of the star
     if (x_max < 0.0) {
@@ -110,11 +111,12 @@ bool BoundingShape::on_spot(const double y, const double z) const {
 }
 
 
-bounds BoundingShape::z_bounds(const double y) const {
+bounds BoundingShape::z_bounds(const double v) const {
     double z_max = 2.0;
     double z_min = 2.0;
 
     for (double z = center.z+radius; z > center.z-radius; z-=grid_interval) {
+        double y = v/(star->equatorial_velocity*(star->diff_a + star->diff_b*std::pow(z, 2) + star->diff_c*std::pow(z, 4)));
         if (on_spot(y, z)) {
             z_max = z;
             break;
@@ -122,6 +124,7 @@ bounds BoundingShape::z_bounds(const double y) const {
     }
 
     for (double z = center.z-radius; z < center.z+radius; z+=grid_interval) {
+        double y = v/(star->equatorial_velocity*(star->diff_a + star->diff_b*std::pow(z, 2) + star->diff_c*std::pow(z, 4)));
         if (on_spot(y, z)) {
             z_min = z;
             break;
