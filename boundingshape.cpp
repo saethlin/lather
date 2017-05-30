@@ -18,9 +18,12 @@ BoundingShape::BoundingShape(const Spot& spot, const double time) {
         }
     }
 
-    const double phase = fmod(time, spot.star->period) / spot.star->period * 2 * M_PI;
-    const double theta = phase + spot.longitude;
     const double phi = M_PI_2 - spot.latitude;
+
+    const double period = star->period * (star->diff_a + star->diff_b*std::pow(cos(phi), 2) + star->diff_c*std::pow(cos(phi), 4));
+    const double phase = fmod(time, period) / period * 2 * M_PI;
+    const double theta = phase + spot.longitude;
+
     center = Point(sin(phi)*cos(theta),
                    sin(phi)*sin(theta),
                    cos(phi));
@@ -48,7 +51,6 @@ BoundingShape::BoundingShape(const Spot& spot, const double time) {
     
     is_on_edge = x1 < 0 || x2 < 0;
     visible = x1 > 0 || x2 > 0;
-
 }
 
 
