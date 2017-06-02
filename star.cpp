@@ -17,6 +17,9 @@ Star::Star(const double radius, const double period, const double inclination, c
     this->limb_quadratic = limb_quadratic;
     this->grid_interval = 2.0 / gridSize;
 
+    // Seed the random number generator
+    generator.seed(0);
+
     // Setup for profiles
     std::vector<double> rv;
     std::vector<double> ccf_quiet;

@@ -7,6 +7,7 @@
 #include "fitrv.hpp"
 #include "planck.hpp"
 #include "inih/cpp/INIReader.h"
+#include "compute_bisector.hpp"
 #include <vector>
 #include <algorithm>
 #include <Magick++.h>

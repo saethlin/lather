@@ -9,13 +9,14 @@ int main() {
 
     std::vector<double> time(100);
     std::iota(time.begin(), time.end(), 0);
+
     for (auto& val : time) {
-        val = val/(double)time.size() * 100.0;
+        val = val/(double)time.size() * 25.0;
     }
 
     auto rv = simulation.observe_rv(time, 4000e-10, 5000e-10);
 
-    //for (const auto& val : rv) std::cout << val << '\n';
+    for (const auto& val : rv) std::cout << val << '\n';
 
     clock_t end = clock();
     double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;

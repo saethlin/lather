@@ -34,8 +34,10 @@ public:
     std::vector<double> fit_result;
     std::vector<float> image;
 
-private:
     double equatorial_velocity;
+    std::mt19937 generator;
+
+private:
 
 };
 

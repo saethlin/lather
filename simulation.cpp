@@ -57,6 +57,7 @@ void Simulation::clear_spots() {
     spots.clear();
 }
 
+
 void Simulation::check_fill_factor(double time) {
     double current_fill_factor = 0.0;
     for (const auto& spot : spots) {
@@ -65,18 +66,17 @@ void Simulation::check_fill_factor(double time) {
         }
     }
 
-    std::mt19937 gen(0);
     std::lognormal_distribution<> fill_dist(0.5, 4.0);
     std::uniform_real_distribution<> lat_dist(-30.0, 30.0);
     std::uniform_real_distribution<> long_dist(0.0, 360.0);
 
     while (current_fill_factor < dynamic_fill_factor) {
-        double new_fill_factor = fill_dist(gen)*9.4e-6;
+        double new_fill_factor = fill_dist(star.generator)*9.4e-6;
         while (new_fill_factor > 0.001) {
-            new_fill_factor = fill_dist(gen)*9.4e-6;
+            new_fill_factor = fill_dist(star.generator)*9.4e-6;
         }
 
-        Spot new_spot(&star, lat_dist(gen), long_dist(gen), new_fill_factor, false, true);
+        Spot new_spot(&star, lat_dist(star.generator), long_dist(star.generator), new_fill_factor, false, true);
         new_spot.time_disappear += time;
         new_spot.time_appear += time;
 
@@ -104,8 +104,8 @@ std::vector<double> Simulation::observe_rv(const std::vector<double>& time, cons
 
     auto fit_guess = star.fit_result;
 
-    // TODO WHY DID I DO THIS
-    //for (const auto& t : time) check_fill_factor(t);
+    // Ensure no collisions at every time of observation
+    for (const auto& t : time) check_fill_factor(t);
 
     double intensity = planck_integral((star.temperature-star.spot_temp_diff), wavelength_min, wavelength_max) / star.intensity;
     for (auto &spot : spots) spot.intensity = intensity;
@@ -129,6 +129,10 @@ std::vector<double> Simulation::observe_rv(const std::vector<double>& time, cons
         normalize(spot_profile);
         auto fit_result = fit_rv(star.profile_quiet.rv(), spot_profile, fit_guess);
         rv[t] = fit_result[1] - star.zero_rv;
+
+        // TODO: Compute profile bisector
+        compute_bisector(star.profile_quiet.rv(), spot_profile);
+        exit(0);
     }
     for (auto& val: rv) val *= 1000.0;  // Convert to m/s
     return rv;

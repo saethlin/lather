@@ -15,13 +15,11 @@ Spot::Spot(Star* star, const double latitude, const double longitude, const doub
         this->temperature = star->temperature - star->spot_temp_diff;
     }
 
+    // Current time will be added to both these numbers. This would be better represented with a birth and lifetime
+    // TODO: Replace this with a deterministic lifetime calculated based on the spectral type or size
     if (mortal) {
-        std::random_device rd;
-        std::mt19937 gen(rd());
-        std::normal_distribution<> d(0, 5.0);
-
         time_appear = 0.0;
-        time_disappear = 15.0 + d(gen);
+        time_disappear = 15.0;
     }
 }
 

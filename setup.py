@@ -1,6 +1,8 @@
 from setuptools import setup, Extension
 import os
 
+install_requires = ['numpy']
+
 os.environ['CC'] = 'g++'
 
 lather = Extension('lather',
@@ -15,4 +17,5 @@ lather = Extension('lather',
 setup(name='lather',
       version='0.0.1',
       description='Starspot modeling framework',
-      ext_modules=[lather])
+      ext_modules=[lather],
+      install_requires=install_requires)

@@ -51,15 +51,16 @@ static PyObject* PySimulation_set_star(PySimulation* self, PyObject* args, PyObj
 
 static PyObject* PySimulation_add_spot(PySimulation* self, PyObject* args, PyObject* kwargs) {
     double latitude, longitude, size;
-    bool plage;
+    bool plage = false;
+    bool mortal = false;
 
-    static char* kwdlist[] = {"latitude", "longitude", "size", "plage", NULL};
+    static char* kwdlist[] = {"latitude", "longitude", "size", "plage", "mortal", NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "dddp", kwdlist, &latitude, &longitude, &size, &plage)) {
+    if (!PyArg_ParseTupleAndKeywords(args, kwargs, "dddpp", kwdlist, &latitude, &longitude, &size, &plage, &mortal)) {
         return NULL;
     }
 
-    self->CppSimulation->add_spot(latitude, longitude, size, plage);
+    self->CppSimulation->add_spot(latitude, longitude, size, plage, mortal);
 
     Py_RETURN_NONE;
 }
