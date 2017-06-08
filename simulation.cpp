@@ -97,8 +97,8 @@ void Simulation::check_fill_factor(double time) {
 }
 
 
-std::vector<double> Simulation::observe_rv(const std::vector<double>& time, const double wavelength_min, const double wavelength_max) {
-    std::vector<double> rv(time.size());
+std::vector<rv_observation> Simulation::observe_rv(const std::vector<double>& time, const double wavelength_min, const double wavelength_max) {
+    std::vector<rv_observation> output(time.size());
 
     star.intensity = planck_integral(star.temperature, wavelength_min, wavelength_max);
 
@@ -128,14 +128,13 @@ std::vector<double> Simulation::observe_rv(const std::vector<double>& time, cons
         }
         normalize(spot_profile);
         auto fit_result = fit_rv(star.profile_quiet.rv(), spot_profile, fit_guess);
-        rv[t] = fit_result[1] - star.zero_rv;
 
-        // TODO: Compute profile bisector
-        compute_bisector(star.profile_quiet.rv(), spot_profile);
-        exit(0);
+        auto rv = fit_result[1] - star.zero_rv;
+        auto bisector = compute_bisector(star.profile_quiet.rv(), spot_profile);
+        output.push_back({rv, bisector});
     }
-    for (auto& val: rv) val *= 1000.0;  // Convert to m/s
-    return rv;
+    for (auto& val: output) val.rv *= 1000.0;  // Convert to m/s
+    return output;
 }
 
 

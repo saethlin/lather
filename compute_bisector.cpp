@@ -1,5 +1,7 @@
 #include "compute_bisector.hpp"
 
+
+#include <iostream>
 std::vector<double> compute_bisector(const std::vector<double>& rv, const std::vector<double>& profile) {
     std::vector<double> bisector(1000);
 
@@ -50,27 +52,23 @@ std::vector<double> compute_bisector(const std::vector<double>& rv, const std::v
     for (int i = 0; i < bisector.size(); i++ ) {
         bisector[i] = gsl_spline_eval(spline, left_profile[0] + i*interp_step, acc);
     }
-    gsl_spline_free(spline);
-    gsl_interp_accel_free(acc);
 
     // Reverse the bisector so things are in the right order after the previous reversal
     //std::reverse(bisector.begin(), bisector.end());
 
     // Interpolate the right side and average
-    gsl_interp_accel* right_acc = gsl_interp_accel_alloc();
-    gsl_spline* right_spline = gsl_spline_alloc(gsl_interp_cspline, left_profile.size());
-
+    gsl_spline* right_spline = gsl_spline_alloc(gsl_interp_cspline, right_profile.size());
     gsl_spline_init(right_spline, right_profile.data(), right_rv.data(), right_profile.size());
 
-    for (int i = 0; i < bisector.size(); i++ ) {
+    // TODO Figure out why this needs to be a 1 and document it
+    for (int i = 1; i < bisector.size(); i++ ) {
         bisector[i] += gsl_spline_eval(spline, right_profile[0] + i*interp_step, acc);
         bisector[i] /= 2;
-        std::cout << bisector[i] << " " << right_profile[0] + i*interp_step << std::endl;
     }
+
     gsl_spline_free(spline);
+    gsl_spline_free(right_spline);
     gsl_interp_accel_free(acc);
-
-
 
     return bisector;
 }

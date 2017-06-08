@@ -73,7 +73,7 @@ static PyObject* PySimulation_clear_spots(PySimulation* self) {
 
 
 static PyObject* PySimulation_observe_rv(PySimulation* self, PyObject *args, PyObject *kwargs) {
-    PyObject* timeArg = NULL;
+    PyObject* timeArg;
     double wavelength_min, wavelength_max;
     static char* kwdlist[] = {"time", "wavelength_min", "wavelength_max", NULL};
 
@@ -88,15 +88,31 @@ static PyObject* PySimulation_observe_rv(PySimulation* self, PyObject *args, PyO
     double* data = (double*)PyArray_DATA(timeArg);
     std::vector<double> time(data, data+dims[0]);
 
-    auto rv = self->CppSimulation->observe_rv(time, wavelength_min, wavelength_max);
+    auto rv_observations = self->CppSimulation->observe_rv(time, wavelength_min, wavelength_max);
 
-    // Copy std::vector outputs into a dict of numpy arrays
+    // Construct the output array for the rv values
     PyObject* output_rv = PyArray_SimpleNew(1, dims, NPY_DOUBLE);
 
     double* output_rv_data = (double*)PyArray_DATA(output_rv);
     for (int i = 0; i < dims[0]; i++) {
-        output_rv_data[i] = rv[i];
+        output_rv_data[i] = rv_observations[i].rv;
     }
+
+    // Construct the output array for the bisectors
+    npy_intp bis_dims[2] = {time.size(), rv_observations[0].bisector.size()};
+    PyObject* output_bisectors = PyArray_SimpleNew(2, bis_dims, NPY_DOUBLE);
+
+    double* bisector_data = (double*)PyArray_DATA(output_bisectors);
+    int i = 0;
+    for (const auto& observation : rv_observations) {
+        for (const auto& val : observation.bisector) {
+            bisector_data[i] = val;
+            i++;
+        }
+    }
+
+    PyObject* output_tuple = Py_BuildValue("OO", output_rv, output_bisectors);
+
     return output_rv;
 }
 
@@ -119,7 +135,6 @@ static PyObject* PySimulation_observe_flux(PySimulation* self, PyObject *args, P
 
     auto flux = self->CppSimulation->observe_flux(time, wavelength_min, wavelength_max);
 
-    // Copy std::vector outputs into a dict of numpy arrays
     PyObject* output_flux = PyArray_SimpleNew(1, dims, NPY_DOUBLE);
 
     double* output_flux_data = (double*)PyArray_DATA(output_flux);
