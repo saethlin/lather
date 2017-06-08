@@ -98,7 +98,7 @@ void Simulation::check_fill_factor(double time) {
 
 
 std::vector<rv_observation> Simulation::observe_rv(const std::vector<double>& time, const double wavelength_min, const double wavelength_max) {
-    std::vector<rv_observation> output(time.size());
+    std::vector<rv_observation> output;
 
     star.intensity = planck_integral(star.temperature, wavelength_min, wavelength_max);
 
@@ -130,7 +130,8 @@ std::vector<rv_observation> Simulation::observe_rv(const std::vector<double>& ti
         auto fit_result = fit_rv(star.profile_quiet.rv(), spot_profile, fit_guess);
 
         auto rv = fit_result[1] - star.zero_rv;
-        auto bisector = compute_bisector(star.profile_quiet.rv(), spot_profile);
+        std::vector<double> bisector = compute_bisector(star.profile_quiet.rv(), spot_profile);
+
         output.push_back({rv, bisector});
     }
     for (auto& val: output) val.rv *= 1000.0;  // Convert to m/s
@@ -160,6 +161,7 @@ std::vector<double> Simulation::observe_flux(const std::vector<double>& time, co
 }
 
 
+/*
 void Simulation::draw(const double time, const int i) const {
     std::vector<double> image(star.image.begin(), star.image.end());
     for (const auto& spot : spots) {
@@ -238,3 +240,4 @@ std::vector<uint8_t> Simulation::draw_rgba(const double time) {
     }
     return std::vector<uint8_t>(image.begin(), image.end());
 }
+*/

@@ -16,7 +16,10 @@ int main() {
 
     auto rv = simulation.observe_rv(time, 4000e-10, 5000e-10);
 
-    for (const auto& val : rv) std::cout << val.rv << '\n';
+    for (const auto& val : rv) {
+        //std::cout << val.rv << '\n';
+        //std::cout << val.bisector.size() << '\n';
+    }
 
     clock_t end = clock();
     double elapsed_secs = double(end - begin) / CLOCKS_PER_SEC;

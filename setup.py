@@ -11,7 +11,7 @@ lather = Extension('lather',
                             'point.cpp', 'compute_bisector.cpp'],
                    include_dirs=['/usr/local/include', '/usr/local/include/gsl'],
                    library_dirs=['/usr/local/lib'],
-                   libraries=['gsl', 'gslcblas', 'Magick++'],
+                   libraries=['gsl', 'gslcblas'],
                    extra_compile_args=['-std=c++14', '-O3'])
 
 setup(name='lather',

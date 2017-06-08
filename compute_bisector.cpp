@@ -1,7 +1,6 @@
 #include "compute_bisector.hpp"
 
 
-#include <iostream>
 std::vector<double> compute_bisector(const std::vector<double>& rv, const std::vector<double>& profile) {
     std::vector<double> bisector(1000);
 
@@ -62,9 +61,11 @@ std::vector<double> compute_bisector(const std::vector<double>& rv, const std::v
 
     // TODO Figure out why this needs to be a 1 and document it
     for (int i = 1; i < bisector.size(); i++ ) {
-        bisector[i] += gsl_spline_eval(spline, right_profile[0] + i*interp_step, acc);
+        bisector[i] -= gsl_spline_eval(spline, right_profile[0] + i*interp_step, acc);
         bisector[i] /= 2;
     }
+
+    // TODO: Not sure if this bisector is correct, axes look good but still not sure
 
     gsl_spline_free(spline);
     gsl_spline_free(right_spline);

@@ -7,6 +7,7 @@
 #include <numpy/arrayobject.h>
 #include <memory>
 #include "simulation.hpp"
+#include <iostream>
 
 
 typedef struct {
@@ -27,6 +28,8 @@ static int PySimulation_init(PySimulation* self, PyObject* args, PyObject* kwarg
     catch (std::exception& e) {
         PyErr_Clear();
         self->CppSimulation = std::make_unique<Simulation>();
+        std::cout << "Failed to load config file" << std::endl;
+        exit(1);
         return 0;
     }
 }
@@ -113,7 +116,7 @@ static PyObject* PySimulation_observe_rv(PySimulation* self, PyObject *args, PyO
 
     PyObject* output_tuple = Py_BuildValue("OO", output_rv, output_bisectors);
 
-    return output_rv;
+    return output_tuple;
 }
 
 
