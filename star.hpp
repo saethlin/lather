@@ -4,6 +4,7 @@
 
 #include "profile.hpp"
 #include "fitrv.hpp"
+#include <random>
 #include <vector>
 #include <iostream>
 #include <fstream>
@@ -11,7 +12,6 @@
 #include <string>
 #include <vector>
 #include <math.h>
-#include <Magick++.h>
 
 
 void normalize(std::vector<double>& vec);

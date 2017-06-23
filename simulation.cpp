@@ -161,40 +161,6 @@ std::vector<double> Simulation::observe_flux(const std::vector<double>& time, co
 }
 
 
-/*
-void Simulation::draw(const double time, const int i) const {
-    std::vector<double> image(star.image.begin(), star.image.end());
-    for (const auto& spot : spots) {
-        if (spot.alive(time)) {
-
-            const auto bounds = BoundingShape(spot, time);
-            auto y_bounds = bounds.y_bounds();
-            y_bounds = {round(y_bounds.upper / star.grid_interval) * star.grid_interval,
-                        round(y_bounds.lower / star.grid_interval) * star.grid_interval};
-            for (auto y = y_bounds.lower; y < y_bounds.upper; y += star.grid_interval) {
-                auto z_bounds = bounds.z_bounds(y);
-                z_bounds = {round(z_bounds.upper / star.grid_interval) * star.grid_interval,
-                            round(z_bounds.lower / star.grid_interval) * star.grid_interval};
-                for (auto z = z_bounds.lower; z < z_bounds.upper; z += star.grid_interval) {
-                    unsigned int y_index = round((y + 1.0) / 2 * 1000);
-                    unsigned int z_index = round((z + 1.0) / 2 * 1000);
-                    double x = 1 - (y * y + z * z);
-                    x = std::max(x, 0.0);
-                    image[z_index * 1000 + y_index] = star.limb_brightness(x) * spot.intensity;
-                }
-            }
-        }
-    }
-    normalize(image);
-    for (auto& val : image) val = 1-val;
-    Magick::InitializeMagick(".");
-    Magick::Image png(1000, 1000, "K", Magick::DoublePixel, image.data());
-    std::stringstream ss;
-    ss << "frame" << std::setw(5) << std::setfill('0') << i << ".png";
-    png.write(ss.str());
-}
-
-
 std::vector<uint8_t> Simulation::draw_rgba(const double time) {
     check_fill_factor(time);
     star.intensity = planck_integral(star.temperature, 4000e-10, 7000e-10);
@@ -240,4 +206,3 @@ std::vector<uint8_t> Simulation::draw_rgba(const double time) {
     }
     return std::vector<uint8_t>(image.begin(), image.end());
 }
-*/

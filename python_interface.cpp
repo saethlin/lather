@@ -1,3 +1,5 @@
+//#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+
 #include <exception>
 #include <stdio.h>
 #include <sstream>
@@ -102,7 +104,7 @@ static PyObject* PySimulation_observe_rv(PySimulation* self, PyObject *args, PyO
     }
 
     // Construct the output array for the bisectors
-    npy_intp bis_dims[2] = {time.size(), rv_observations[0].bisector.size()};
+    npy_intp bis_dims[2] = {(npy_intp)time.size(), (npy_intp)rv_observations[0].bisector.size()};
     PyObject* output_bisectors = PyArray_SimpleNew(2, bis_dims, NPY_DOUBLE);
 
     double* bisector_data = (double*)PyArray_DATA(output_bisectors);
