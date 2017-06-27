@@ -1,4 +1,3 @@
-
 from setuptools import setup, Extension
 
 install_requires = ['numpy']

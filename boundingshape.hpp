@@ -1,12 +1,8 @@
 #ifndef LATHER_BOUNDINGSHAPE_H
 #define LATHER_BOUNDINGSHAPE_H
 
-
 #include "point.hpp"
-#include "spot.hpp"
-#include <cmath>
-#include <iostream>
-
+#include <algorithm>
 
 struct bounds {
     bounds(double val1, double val2) {
@@ -18,7 +14,6 @@ struct bounds {
 
 
 class Spot;
-
 
 class BoundingShape {
 public:

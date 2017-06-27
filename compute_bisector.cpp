@@ -1,4 +1,7 @@
 #include "compute_bisector.hpp"
+#include <algorithm>
+#include <gsl/gsl_interp.h>
+#include <gsl/gsl_spline.h>
 
 
 std::vector<double> compute_bisector(const std::vector<double>& rv, const std::vector<double>& profile) {
@@ -47,10 +50,10 @@ std::vector<double> compute_bisector(const std::vector<double>& rv, const std::v
     gsl_interp_accel* left_acc = gsl_interp_accel_alloc();
     gsl_interp_accel* right_acc = gsl_interp_accel_alloc();
 
-    gsl_spline* left_spline = gsl_spline_alloc(gsl_interp_akima, left_profile.size());
+    gsl_spline* left_spline = gsl_spline_alloc(gsl_interp_steffen, left_profile.size());
     gsl_spline_init(left_spline, left_profile.data(), left_rv.data(), left_profile.size());
 
-    gsl_spline* right_spline = gsl_spline_alloc(gsl_interp_akima, right_profile.size());
+    gsl_spline* right_spline = gsl_spline_alloc(gsl_interp_steffen, right_profile.size());
     gsl_spline_init(right_spline, right_profile.data(), right_rv.data(), right_profile.size());
 
     for (int i = 0; i < bisector.size(); i++ ) {

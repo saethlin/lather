@@ -1,4 +1,7 @@
 #include "spot.hpp"
+#include <math.h>
+#include "star.hpp"
+#include "boundingshape.hpp"
 
 
 Spot::Spot(Star* star, const double latitude, const double longitude, const double fillfactor, const bool plage, const bool mortal) {

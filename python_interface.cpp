@@ -1,5 +1,6 @@
 //#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
 
+#include "simulation.hpp"
 #include <exception>
 #include <stdio.h>
 #include <sstream>
@@ -8,7 +9,6 @@
 #include <Python.h>
 #include <numpy/arrayobject.h>
 #include <memory>
-#include "simulation.hpp"
 #include <iostream>
 
 
@@ -30,9 +30,7 @@ static int PySimulation_init(PySimulation* self, PyObject* args, PyObject* kwarg
     catch (std::exception& e) {
         PyErr_Clear();
         self->CppSimulation = std::make_unique<Simulation>();
-        std::cout << "Failed to load config file" << std::endl;
-        exit(1);
-        return 0;
+        PyErr_SetString(PyExc_RuntimeError, "Failed to load config file");
     }
 }
 

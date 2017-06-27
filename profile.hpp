@@ -1,19 +1,15 @@
 #ifndef PROFILE_HPP
 #define PROFILE_HPP
 
-
-#include <cmath>
-#include <unordered_map>
-#include <memory>
 #include <vector>
-
+#include <cstddef>
 
 class Profile {
 public:
     Profile() {}
     Profile(const std::vector<double> rv, const std::vector<double> ccf, const double v_max, const double grid_interval);
     std::vector<double>& shift(const double v_shift) const;
-    const size_t size() const {return rv().size();}
+    size_t size() const {return rv().size();}
     const std::vector<double>& rv() const {return rv_impl;}
     const std::vector<double>& ccf() const {return ccf_impl;}
 

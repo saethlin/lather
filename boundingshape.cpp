@@ -1,4 +1,7 @@
 #include "boundingshape.hpp"
+#include "spot.hpp"
+#include "star.hpp"
+#include <iostream>
 
 
 BoundingShape::BoundingShape(const Spot& spot, const double time) {

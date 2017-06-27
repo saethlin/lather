@@ -1,4 +1,6 @@
 #include "star.hpp"
+#include "fitrv.hpp"
+#include <fstream>
 
 
 const double solar_radius = 696000.0;

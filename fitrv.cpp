@@ -1,4 +1,6 @@
 #include "fitrv.hpp"
+#include <gsl/gsl_multifit_nlin.h>
+#include <cmath>
 
 
 int gauss_f(const gsl_vector* v, void* params, gsl_vector* f) {

@@ -1,5 +1,5 @@
 #include "profile.hpp"
-#include <iostream>
+#include <cmath>
 
 
 Profile::Profile(const std::vector<double> rv, const std::vector<double> ccf, const double v_max, const double grid_interval) {
@@ -15,20 +15,12 @@ Profile::Profile(const std::vector<double> rv, const std::vector<double> ccf, co
     for (auto i = 0; i < size()-1; i++) {
         derivative[i] = (ccf[i+1] - ccf[i]) / (rv[i+1] - rv[i]);
     }
-
-    //std::cout << v_max << " " << grid_interval << std::endl;
-    //std::cout << this << std::endl;
-
 }
 
 
 std::vector<double>& Profile::shift(const double v_shift) const {
 
     const int index = (int)(v_shift/v_max/grid_interval + 1.0/grid_interval);
-
-    //std::cout << this << std::endl;
-    //std::cout << v_max << " " << grid_interval << '\n';
-    //std::cout << sizeof(Profile) << std::endl;
 
     auto& ccf_shifted = cache[index];
 

@@ -1,18 +1,9 @@
 #ifndef STAR_HPP
 #define STAR_HPP
 
-
-#include "profile.hpp"
-#include "fitrv.hpp"
+#include <vector>
 #include <random>
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <string>
-#include <vector>
-#include <math.h>
-
+#include "profile.hpp"
 
 void normalize(std::vector<double>& vec);
 

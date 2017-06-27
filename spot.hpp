@@ -1,15 +1,9 @@
 #ifndef SPOT_HPP
 #define SPOT_HPP
 
-
-#include "star.hpp"
-#include "profile.hpp"
-#include "point.hpp"
-#include "boundingshape.hpp"
 #include <vector>
-#include <math.h>
-#include <numeric>
 
+class Star;
 
 class Spot {
 public:

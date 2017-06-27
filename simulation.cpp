@@ -1,5 +1,10 @@
 #include "simulation.hpp"
-
+#include "inih/cpp/INIReader.h"
+#include "planck.hpp"
+#include "compute_bisector.hpp"
+#include "boundingshape.hpp"
+#include "fitrv.hpp"
+#include <algorithm>
 
 void normalize(std::vector<double>& vec) {
     const auto max = *std::max_element(vec.begin(), vec.end());

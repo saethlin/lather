@@ -1,6 +1,5 @@
 #include "simulation.hpp"
 #include <SFML/Graphics.hpp>
-
 #include <chrono>
 #include <thread>
 

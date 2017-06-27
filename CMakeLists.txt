@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.6)
 project(lather)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_COMPILER /usr/bin/clang++)
 
 set(SOURCE_FILES
