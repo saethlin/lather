@@ -136,10 +136,13 @@ std::vector<rv_observation> Simulation::observe_rv(const std::vector<double>& ti
 
         auto rv = fit_result[1] - star.zero_rv;
         std::vector<double> bisector = compute_bisector(star.profile_quiet.rv(), spot_profile);
-
+        for (auto& val : bisector) {
+            val -= star.zero_rv;
+            val *= 1000.0; // Convert to m/s
+        }
+        rv *= 1000.0;
         output.push_back({rv, bisector});
     }
-    for (auto& val: output) val.rv *= 1000.0;  // Convert to m/s
     return output;
 }
 
